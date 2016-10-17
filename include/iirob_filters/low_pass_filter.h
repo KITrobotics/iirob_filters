@@ -41,19 +41,13 @@
 #ifndef IIROB_FILTERS_LOW_PASS_FILTER_H
 #define IIROB_FILTERS_LOW_PASS_FILTER_H
 
-#include <stdint.h>
-#include <inttypes.h>
-#include <iostream>
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Vector3Stamped.h>
 #include <eigen_conversions/eigen_msg.h>
-
-typedef unsigned char uint8_t;
 
 #include <math.h>
 #include <iostream>
+
 
 class LowPassFilter
 {
