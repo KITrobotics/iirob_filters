@@ -74,6 +74,9 @@ private:
 public:
 
   GravityCompensator(ros::NodeHandle& nh);
+  GravityCompensator();
+  bool init(const ros::NodeHandle &nh);
+
   GravityCompensator(std::string sensor_frame, std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);
 
   geometry_msgs::WrenchStamped compensate(const geometry_msgs::WrenchStamped &to_compensate_wrench);

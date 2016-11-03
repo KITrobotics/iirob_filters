@@ -57,12 +57,15 @@ private:
   double threshold_angular_;
 
 public:
-
+  ThresholdFilter();
   ThresholdFilter(ros::NodeHandle nh);
 
   ThresholdFilter(double threshold);
 
   ThresholdFilter(double threshold_lin, double threshold_angular);
+
+  bool init(const ros::NodeHandle &nh);
+
 
   double applyFilter(double value);
 

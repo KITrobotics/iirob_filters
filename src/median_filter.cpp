@@ -45,9 +45,14 @@ MedianFilter::MedianFilter(ros::NodeHandle nh) : nh_(nh)
   nh_.param<int>("divider", divider_, 1);
 }
 
-MedianFilter::MedianFilter(double divider)
+MedianFilter::MedianFilter(int divider)
   : divider_(divider)
 {
+}
+
+bool MedianFilter::init(const ros::NodeHandle &nh)
+{
+    nh.param<int>("divider", divider_, 1);
 }
 
 double MedianFilter::applyFilter(double value)

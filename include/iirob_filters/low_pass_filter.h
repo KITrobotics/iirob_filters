@@ -53,9 +53,10 @@ class LowPassFilter
 {
 public:
 
-    LowPassFilter(ros::NodeHandle nh);
+    LowPassFilter(double sampling_frequency = 0.0, double damping_frequency = 0.0, double damping_intensity = 0.0, double divider = 0.0);
 
-    LowPassFilter(double sampling_frequency, double damping_frequency, double damping_intensity, double divider);
+    bool initLowPass(double sampling_frequency, double damping_frequency, double damping_intensity);
+    bool init(const ros::NodeHandle &nh);
 
     double applyFilter(double value);
 

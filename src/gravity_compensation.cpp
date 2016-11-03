@@ -53,6 +53,7 @@ GravityCompensator::GravityCompensator(ros::NodeHandle& nh) :
 
   init();
 }
+GravityCompensator::GravityCompensator() {}
 
 GravityCompensator::GravityCompensator(std::string sensor_frame, std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z)
   : sensor_frame_(sensor_frame), world_frame_(world_frame), force_z_(force_z)
@@ -71,6 +72,18 @@ bool GravityCompensator::init()
   p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
 
   return true;
+}
+
+bool GravityCompensator::init(const ros::NodeHandle &nh)
+{
+    nh_.param<double>("CoG/x", cog_.vector.x, 0.0);
+    nh_.param<double>("CoG/y", cog_.vector.y, 0.0);
+    nh_.param<double>("CoG/z", cog_.vector.z, 0.0);
+    nh_.param<double>("force", force_z_, 0.0);
+    nh_.param<std::string>("sensor_frame", sensor_frame_, "");
+    nh_.param<std::string>("world_frame", world_frame_, "");
+
+    return init();
 }
 
 geometry_msgs::WrenchStamped GravityCompensator::compensate(const geometry_msgs::WrenchStamped& to_compensate_wrench)

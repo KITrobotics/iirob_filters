@@ -54,9 +54,10 @@ public:
 
   MedianFilter(ros::NodeHandle nh);
 
-  MedianFilter(double divider);
+  MedianFilter(int divider = 1);
 
   double applyFilter(double value);
+  bool init(const ros::NodeHandle &nh);
 
 private:
 
