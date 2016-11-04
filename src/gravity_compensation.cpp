@@ -76,13 +76,12 @@ bool GravityCompensator::init()
 
 bool GravityCompensator::init(const ros::NodeHandle &nh)
 {
-    nh_.param<double>("CoG/x", cog_.vector.x, 0.0);
-    nh_.param<double>("CoG/y", cog_.vector.y, 0.0);
-    nh_.param<double>("CoG/z", cog_.vector.z, 0.0);
-    nh_.param<double>("force", force_z_, 0.0);
-    nh_.param<std::string>("sensor_frame", sensor_frame_, "");
-    nh_.param<std::string>("world_frame", world_frame_, "");
-
+    nh.param<double>("CoG/x", cog_.vector.x, 0.0);
+    nh.param<double>("CoG/y", cog_.vector.y, 0.0);
+    nh.param<double>("CoG/z", cog_.vector.z, 0.0);
+    nh.param<double>("force", force_z_, 0.0);
+    nh.param<std::string>("sensor_frame", sensor_frame_, "");
+    nh.param<std::string>("world_frame", world_frame_, "");
     return init();
 }
 

@@ -51,8 +51,8 @@ ThresholdFilter::ThresholdFilter()
 
 bool ThresholdFilter::init(const ros::NodeHandle &nh)
 {
-  nh_.param<double>("linear_threshold", threshold_lin_, 0.);
-  nh_.param<double>("angular_threshold", threshold_angular_, 0.);
+  nh.param<double>("linear_threshold", threshold_lin_, 0.);
+  nh.param<double>("angular_threshold", threshold_angular_, 0.);
 }
 
 ThresholdFilter::ThresholdFilter(double threshold) : threshold_(threshold)
