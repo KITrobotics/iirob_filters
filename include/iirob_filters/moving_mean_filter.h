@@ -7,7 +7,7 @@
  *
  * Author: Denis Štogl, email: denis.stogl@kit.edu
  *
- * Date of creation: 2014
+ * Date of creation: 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -38,37 +38,35 @@
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#include <iirob_filters/median_filter.h>
+#ifndef IIROB_FILTERS_MOVING_MEAN_FILTER_H
+#define IIROB_FILTERS_MOVING_MEAN_FILTER_H
 
-MedianFilter::MedianFilter(ros::NodeHandle nh) : nh_(nh)
+#include <ros/ros.h>
+
+#include <math.h>
+
+class MovingMeanFilter
 {
-  nh_.param<int>("divider", divider_, 1);
-}
+public:
 
-MedianFilter::MedianFilter(int divider)
-  : divider_(divider)
-{
-}
+  MovingMeanFilter(ros::NodeHandle nh);
 
-bool MedianFilter::init(const ros::NodeHandle &nh)
-{
-    nh.param<int>("divider", divider_, 1);
-}
+  MovingMeanFilter(int divider = 1);
 
-double MedianFilter::applyFilter(double value)
-{
-  if (values.size() < divider_) {
-    values.push_back(value);
-    return 0;
-  }
+  double applyFilter(double value);
+  bool init(const ros::NodeHandle &nh);
 
-  values.erase(values.begin());
-  values.push_back(value);
+private:
 
-  double sum;
-  for(std::vector<double>::iterator it = values.begin(); it != values.end(); ++it) {
-    sum = *it;
-  }
+  ros::NodeHandle nh_;
 
-  return  sum / values.size();
-}
+  // Parameters
+  int divider_;
+
+  // Filter parametrs
+  int divider_counter;
+
+  std::vector<double> values;
+};
+
+#endif

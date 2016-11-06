@@ -8,7 +8,7 @@
  * Author: Alexandar Pollmann
  *         Denis Štogl, email: denis.stogl@kit.edu
  *
- * Date of creation: 2015
+ * Date of creation: 2015-2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *

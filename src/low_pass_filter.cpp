@@ -7,7 +7,7 @@
  *
  * Author: Denis Štogl, email: denis.stogl@kit.edu
  *
- * Date of creation: 2014
+ * Date of creation: 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *

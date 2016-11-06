@@ -41,8 +41,8 @@ add_library(low_pass_filter
   src/low_pass_filter.cpp
 )
 
-add_library(median_filter
-  src/median_filter.cpp
+add_library(moving_mean_filter
+  src/moving_mean_filter.cpp
 )
 
 add_library(threshold_filter
@@ -51,7 +51,7 @@ add_library(threshold_filter
 
 target_link_libraries(gravity_compensation ${catkin_LIBRARIES})
 target_link_libraries(low_pass_filter ${catkin_LIBRARIES})
-target_link_libraries(median_filter ${catkin_LIBRARIES})
+target_link_libraries(moving_mean_filter ${catkin_LIBRARIES})
 target_link_libraries(threshold_filter ${catkin_LIBRARIES})
 
 

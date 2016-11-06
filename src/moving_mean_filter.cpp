@@ -38,38 +38,37 @@
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#ifndef IIROB_FILTERS_MEDIAN_FILTER_H
-#define IIROB_FILTERS_MEDIAN_FILTER_H
+#include <iirob_filters/moving_mean_filter.h>
 
-#include <ros/ros.h>
-
-typedef unsigned char uint8_t;
-
-#include <math.h>
-#include <iostream>
-
-class MedianFilter
+MovingMeanFilter::MovingMeanFilter(ros::NodeHandle nh) : nh_(nh)
 {
-public:
+  nh_.param<int>("divider", divider_, 1);
+}
 
-  MedianFilter(ros::NodeHandle nh);
+MovingMeanFilter::MovingMeanFilter(int divider)
+  : divider_(divider)
+{
+}
 
-  MedianFilter(int divider = 1);
+bool MovingMeanFilter::init(const ros::NodeHandle &nh)
+{
+    nh.param<int>("divider", divider_, 1);
+}
 
-  double applyFilter(double value);
-  bool init(const ros::NodeHandle &nh);
+double MovingMeanFilter::applyFilter(double value)
+{
+  if (values.size() < divider_) {
+    values.push_back(value);
+    return 0;
+  }
 
-private:
+  values.erase(values.begin());
+  values.push_back(value);
 
-  ros::NodeHandle nh_;
+  double sum;
+  for(std::vector<double>::iterator it = values.begin(); it != values.end(); ++it) {
+    sum = *it;
+  }
 
-  // Parameters
-  int divider_;
-
-  // Filter parametrs
-  int divider_counter;
-
-  std::vector<double> values;
-};
-
-#endif
+  return  sum / values.size();
+}

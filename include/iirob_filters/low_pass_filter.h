@@ -7,7 +7,7 @@
  *
  * Author: Denis Štogl, email: denis.stogl@kit.edu
  *
- * Date of creation: 2014
+ * Date of creation: 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -46,7 +46,6 @@
 #include <eigen_conversions/eigen_msg.h>
 
 #include <math.h>
-#include <iostream>
 
 
 class LowPassFilter
