@@ -62,12 +62,13 @@ private:
 
   // Frames for Transformation of Gravity / CoG Vector
   std::string world_frame_;
-  std::string sensor_frame_;
 
   // tf2 objects
   tf2_ros::Buffer *p_tf_Buffer_;
   tf2_ros::TransformListener *p_tf_Listener;
-  geometry_msgs::TransformStamped transform_cog_;
+  geometry_msgs::TransformStamped transform_, transform_back_;
+  
+  uint _num_transform_errors;
 
   bool init();
 
@@ -77,7 +78,7 @@ public:
   GravityCompensator();
   bool init(const ros::NodeHandle &nh);
 
-  GravityCompensator(std::string sensor_frame, std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);
+  GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);
 
   geometry_msgs::WrenchStamped compensate(const geometry_msgs::WrenchStamped &to_compensate_wrench);
 
