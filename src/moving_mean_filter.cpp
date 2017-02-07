@@ -59,16 +59,16 @@ double MovingMeanFilter::applyFilter(double value)
 {
   if (values.size() < divider_) {
     values.push_back(value);
-    return 0;
+    return value;
   }
 
   values.erase(values.begin());
   values.push_back(value);
 
-  double sum;
+  double sum = 0.0;
   for(std::vector<double>::iterator it = values.begin(); it != values.end(); ++it) {
-    sum = *it;
+    sum += *it;
   }
-
+  
   return  sum / values.size();
 }
