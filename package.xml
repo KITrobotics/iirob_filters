@@ -24,5 +24,6 @@
   <depend>eigen_conversions</depend>
   <depend>geometry_msgs</depend>
   <depend>roscpp</depend>
+  <depend>tf2_ros</depend>
 
 </package>
