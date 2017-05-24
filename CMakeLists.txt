@@ -17,10 +17,9 @@ if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
   find_package(cmake_modules REQUIRED)
   find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES}) 
 else()
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+  set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+  set(Eigen_LIBRARIES ${EIGEN3_LIBRARIES}) 
 endif()
 
 catkin_package(
@@ -40,6 +39,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Eigen_INCLUDE_DIRS}
 )
 
 add_library(gravity_compensation
@@ -59,7 +59,7 @@ add_library(threshold_filter
 )
 
 target_link_libraries(gravity_compensation ${catkin_LIBRARIES})
-target_link_libraries(low_pass_filter ${catkin_LIBRARIES})
+target_link_libraries(low_pass_filter ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 target_link_libraries(moving_mean_filter ${catkin_LIBRARIES})
 target_link_libraries(threshold_filter ${catkin_LIBRARIES})
 
