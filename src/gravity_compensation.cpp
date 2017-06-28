@@ -42,20 +42,22 @@
 #include <iirob_filters/gravity_compensation.h>
 
 GravityCompensator::GravityCompensator(ros::NodeHandle& nh) :
-  nh_(nh)
+  nh_(nh), params_{ros::NodeHandle(nh)}
 {
-  nh_.param<double>("CoG/x", cog_.vector.x, 0.0);
-  nh_.param<double>("CoG/y", cog_.vector.y, 0.0);
-  nh_.param<double>("CoG/z", cog_.vector.z, 0.0);
-  nh_.param<double>("force", force_z_, 0.0);
-  nh_.param<std::string>("world_frame", world_frame_, "");
-
+  params_.setNamespace(nh.getNamespace());
+  params_.fromParamServer();
+  cog_.vector.x = params_.CoG_x;
+  cog_.vector.y = params_.CoG_y;
+  cog_.vector.z = params_.CoG_z;
+  force_z_ = params_.force;
+  world_frame_ = params_.world_frame;
   init();
 }
-GravityCompensator::GravityCompensator() {}
+GravityCompensator::GravityCompensator(): params_{ros::NodeHandle(nh_)}
+{}
 
 GravityCompensator::GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z)
-  : world_frame_(world_frame), force_z_(force_z)
+  : world_frame_(world_frame), force_z_(force_z), params_{ros::NodeHandle(nh_)}
 {
   cog_.vector.x = cog_x;
   cog_.vector.y = cog_y;
@@ -77,11 +79,14 @@ bool GravityCompensator::init()
 
 bool GravityCompensator::init(const ros::NodeHandle &nh)
 {
-    nh.param<double>("CoG/x", cog_.vector.x, 0.0);
-    nh.param<double>("CoG/y", cog_.vector.y, 0.0);
-    nh.param<double>("CoG/z", cog_.vector.z, 0.0);
-    nh.param<double>("force", force_z_, 0.0);
-    nh.param<std::string>("world_frame", world_frame_, "");
+    params_.setNamespace(nh.getNamespace());
+    params_.fromParamServer();
+    cog_.vector.x = params_.CoG_x;
+    cog_.vector.y = params_.CoG_y;
+    cog_.vector.z = params_.CoG_z;
+    force_z_ = params_.force;
+    world_frame_ = params_.world_frame;
+  
     return init();
 }
 

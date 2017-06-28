@@ -42,7 +42,8 @@
 #define IIROB_FILTERS_MOVING_MEAN_FILTER_H
 
 #include <ros/ros.h>
-
+#include <iirob_filters/MovingMeanParameters.h>
+#include <iirob_filters/MovingMeanConfig.h>
 #include <math.h>
 
 class MovingMeanFilter
@@ -59,6 +60,7 @@ public:
 private:
 
   ros::NodeHandle nh_;
+  iirob_filters::MovingMeanParameters params_;
 
   // Parameters
   int divider_;
