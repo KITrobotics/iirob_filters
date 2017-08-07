@@ -44,6 +44,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <eigen_conversions/eigen_msg.h>
+#include <iirob_filters/LowPassFilterParameters.h>
 
 #include <math.h>
 
@@ -54,9 +55,7 @@ public:
 
     LowPassFilter(double sampling_frequency = 0.0, double damping_frequency = 0.0, double damping_intensity = 0.0, double divider = 0.0);
 
-    bool initLowPass(double sampling_frequency, double damping_frequency, double damping_intensity);
     bool init(const ros::NodeHandle &nh);
-
     double applyFilter(double value);
 
     geometry_msgs::WrenchStamped applyFilter(geometry_msgs::WrenchStamped &to_filter_wrench);
@@ -64,6 +63,7 @@ public:
 private:
 
     ros::NodeHandle nh_;
+    iirob_filters::LowPassFilterParameters params_;
 
     // Parameters
     double sampling_frequency_;

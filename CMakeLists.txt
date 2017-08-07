@@ -7,6 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
   tf2_ros
+  rosparam_handler
+  dynamic_reconfigure 
 )
 
 find_package(Eigen3)
@@ -18,6 +20,24 @@ else()
   set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
   set(Eigen_LIBRARIES ${EIGEN3_LIBRARIES}) 
 endif()
+
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++14" Cpp14CompilerFlag)
+if (Cpp14CompilerFlag)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "17")
+	#no additional flag is required
+else()
+	message(FATAL_ERROR "Compiler does not have c++14 support. Use at least g++4.9 or Visual Studio 2013 and newer.")
+endif()
+
+generate_ros_parameter_files(
+    cfg/Threshold.params
+    cfg/MovingMean.params
+    cfg/LowPassFilter.params
+    cfg/GravityCompensation.params
+)
+
 
 catkin_package(
   INCLUDE_DIRS include
@@ -36,10 +56,29 @@ include_directories(
   ${Eigen_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}_gravity_compensation src/gravity_compensation.cpp)
-add_library(${PROJECT_NAME}_low_pass_filter src/low_pass_filter.cpp)
-add_library(${PROJECT_NAME}_moving_mean_filter src/moving_mean_filter.cpp)
-add_library(${PROJECT_NAME}_threshold_filter src/threshold_filter.cpp)
+add_library(${PROJECT_NAME}_gravity_compensation
+  src/gravity_compensation.cpp
+)
+add_dependencies(gravity_compensation gravity_compensation_gencfg) # For dynamic_reconfigure
+add_dependencies(gravity_compensation gravity_compensation_genparam) # For rosparam_handler
+
+add_library(${PROJECT_NAME}_low_pass_filter
+  src/low_pass_filter.cpp
+)
+add_dependencies(low_pass_filter low_pass_filter_gencfg) # For dynamic_reconfigure
+add_dependencies(low_pass_filter low_pass_filter_genparam) # For rosparam_handler
+
+add_library(${PROJECT_NAME}_moving_mean_filter
+  src/moving_mean_filter.cpp
+)
+add_dependencies(moving_mean_filter moving_mean_filter_gencfg) # For dynamic_reconfigure
+add_dependencies(moving_mean_filter moving_mean_filter_genparam) # For rosparam_handler
+
+add_library(${PROJECT_NAME}_threshold_filter
+  src/threshold_filter.cpp
+)
+add_dependencies(threshold_filter threshold_filter_gencfg) # For dynamic_reconfigure
+add_dependencies(threshold_filter threshold_filter_genparam) # For rosparam_handle
 
 target_link_libraries(${PROJECT_NAME}_gravity_compensation ${catkin_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_low_pass_filter ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
