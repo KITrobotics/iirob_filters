@@ -59,26 +59,26 @@ include_directories(
 add_library(${PROJECT_NAME}_gravity_compensation
   src/gravity_compensation.cpp
 )
-add_dependencies(gravity_compensation gravity_compensation_gencfg) # For dynamic_reconfigure
-add_dependencies(gravity_compensation gravity_compensation_genparam) # For rosparam_handler
+add_dependencies(${PROJECT_NAME}_gravity_compensation ${PROJECT_NAME}_gravity_compensation_gencfg) # For dynamic_reconfigure
+add_dependencies(${PROJECT_NAME}_gravity_compensation ${PROJECT_NAME}_gravity_compensation_genparam) # For rosparam_handler
 
 add_library(${PROJECT_NAME}_low_pass_filter
   src/low_pass_filter.cpp
 )
-add_dependencies(low_pass_filter low_pass_filter_gencfg) # For dynamic_reconfigure
-add_dependencies(low_pass_filter low_pass_filter_genparam) # For rosparam_handler
+add_dependencies(${PROJECT_NAME}_low_pass_filter ${PROJECT_NAME}_low_pass_filter_gencfg) # For dynamic_reconfigure
+add_dependencies(${PROJECT_NAME}_low_pass_filter ${PROJECT_NAME}_low_pass_filter_genparam) # For rosparam_handler
 
 add_library(${PROJECT_NAME}_moving_mean_filter
   src/moving_mean_filter.cpp
 )
-add_dependencies(moving_mean_filter moving_mean_filter_gencfg) # For dynamic_reconfigure
-add_dependencies(moving_mean_filter moving_mean_filter_genparam) # For rosparam_handler
+add_dependencies(${PROJECT_NAME}_moving_mean_filter ${PROJECT_NAME}_moving_mean_filter_gencfg) # For dynamic_reconfigure
+add_dependencies(${PROJECT_NAME}_moving_mean_filter ${PROJECT_NAME}_moving_mean_filter_genparam) # For rosparam_handler
 
 add_library(${PROJECT_NAME}_threshold_filter
   src/threshold_filter.cpp
 )
-add_dependencies(threshold_filter threshold_filter_gencfg) # For dynamic_reconfigure
-add_dependencies(threshold_filter threshold_filter_genparam) # For rosparam_handle
+add_dependencies(${PROJECT_NAME}_threshold_filter ${PROJECT_NAME}_threshold_filter_gencfg) # For dynamic_reconfigure
+add_dependencies(${PROJECT_NAME}_threshold_filter ${PROJECT_NAME}_threshold_filter_genparam) # For rosparam_handle
 
 target_link_libraries(${PROJECT_NAME}_gravity_compensation ${catkin_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_low_pass_filter ${catkin_LIBRARIES} ${Eigen_LIBRARIES})

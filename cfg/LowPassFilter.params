@@ -9,4 +9,4 @@ my_group.add("DampingFrequency", paramtype="double", description="sampling frequ
 my_group.add("DampingIntensity", paramtype="double", description="sampling frequency", default=0, configurable=True)
 
 #Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
-exit(gen.generate("iirob_filters", "low_pass_filter", "LowPassFilter"))
+exit(gen.generate("iirob_filters", "iirob_filters_low_pass_filter", "LowPassFilter"))

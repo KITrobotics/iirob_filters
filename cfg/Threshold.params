@@ -8,4 +8,4 @@ my_group.add("linear_threshold", paramtype="double", description="number of meas
 my_group.add("angular_threshold", paramtype="double", description="time between two measurements", default=0, configurable=True)
 
 #Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
-exit(gen.generate("iirob_filters", "threshold_filter", "Threshold"))
+exit(gen.generate("iirob_filters", "iirob_filters_threshold_filter", "Threshold"))

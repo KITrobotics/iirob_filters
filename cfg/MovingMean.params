@@ -5,4 +5,4 @@ gen = ParameterGenerator()
 gen.add("divider", paramtype="int", description="mean divider", default=4, configurable=True)
 
 #Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
-exit(gen.generate("iirob_filters", "moving_mean_filter", "MovingMean"))
+exit(gen.generate("iirob_filters", "iirob_filters_moving_mean_filter", "MovingMean"))
