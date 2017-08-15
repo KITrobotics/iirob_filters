@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+from rosparam_handler.parameter_generator_catkin import *
+gen = ParameterGenerator()
+
+# Add a Lowpass Filter group
+my_group = gen.add_group("LowPassFilter")
+my_group.add("SamplingFrequency", paramtype="double", description="sampling frequency", default=0, configurable=True)
+my_group.add("DampingFrequency", paramtype="double", description="sampling frequency", default=0, configurable=True)
+my_group.add("DampingIntensity", paramtype="double", description="sampling frequency", default=0, configurable=True)
+
+#Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
+exit(gen.generate("iirob_filters", "iirob_filters_low_pass_filter", "LowPassFilter"))

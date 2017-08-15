@@ -47,6 +47,7 @@
 #include <geometry_msgs/Vector3Stamped.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
+#include <iirob_filters/GravityCompensationParameters.h>
 
 class GravityCompensator
 {
@@ -55,6 +56,7 @@ private:
 
   //ROS Objects
   ros::NodeHandle nh_;
+  iirob_filters::GravityCompensationParameters params_;
 
   // Storage for Calibration Values
   geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
