@@ -44,14 +44,14 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
-
+#include <iirob_filters/ThresholdParameters.h>
 
 class ThresholdFilter
 {
 
 private:
   ros::NodeHandle nh_;
-
+  iirob_filters::ThresholdParameters params_;
   double threshold_;
   double threshold_lin_;
   double threshold_angular_;

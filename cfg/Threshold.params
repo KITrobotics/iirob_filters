@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+from rosparam_handler.parameter_generator_catkin import *
+gen = ParameterGenerator()
+
+#Add a Threshold Filter group
+my_group = gen.add_group("ThresholdFilter")
+my_group.add("linear_threshold", paramtype="double", description="number of measurements for initial calibration", default=0, configurable=True)
+my_group.add("angular_threshold", paramtype="double", description="time between two measurements", default=0, configurable=True)
+
+#Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
+exit(gen.generate("iirob_filters", "iirob_filters_threshold_filter", "Threshold"))
