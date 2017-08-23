@@ -57,10 +57,10 @@ bool ThresholdFilter::init(const ros::NodeHandle &nh)
   threshold_angular_ = params_.angular_threshold;
 }
 
-ThresholdFilter::ThresholdFilter(double threshold) : threshold_(threshold), params_{nh_.getNamespace()+"/ThresholdFilter")}
+ThresholdFilter::ThresholdFilter(double threshold) : threshold_(threshold), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {}
 
-ThresholdFilter::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{ros::NodeHandle(nh_.getNamespace()+"/ThresholdFilter")}
+ThresholdFilter::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {}
 
 double ThresholdFilter::applyFilter(double value)
