@@ -60,7 +60,6 @@ public:
 private:
 
   ros::NodeHandle nh_;
-  iirob_filters::MovingMeanParameters params_;
 
   // Parameters
   int divider_;

@@ -41,28 +41,26 @@
 
 #include <iirob_filters/threshold_filter.h>
 
-ThresholdFilter::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{ros::NodeHandle(nh_)}
+ThresholdFilter::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {
-  params_.setNamespace(nh.getNamespace());
   params_.fromParamServer();
   threshold_lin_ = params_.linear_threshold;
   threshold_angular_ = params_.angular_threshold;
 }
-ThresholdFilter::ThresholdFilter(): params_{ros::NodeHandle(nh_)}
+ThresholdFilter::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter"}
 {}
 
 bool ThresholdFilter::init(const ros::NodeHandle &nh)
 {
-  params_.setNamespace(nh.getNamespace());
   params_.fromParamServer();
   threshold_lin_ = params_.linear_threshold;
   threshold_angular_ = params_.angular_threshold;
 }
 
-ThresholdFilter::ThresholdFilter(double threshold) : threshold_(threshold), params_{ros::NodeHandle("~")}
+ThresholdFilter::ThresholdFilter(double threshold) : threshold_(threshold), params_{nh_.getNamespace()+"/ThresholdFilter")}
 {}
 
-ThresholdFilter::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{ros::NodeHandle("~")}
+ThresholdFilter::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{ros::NodeHandle(nh_.getNamespace()+"/ThresholdFilter")}
 {}
 
 double ThresholdFilter::applyFilter(double value)

@@ -63,7 +63,6 @@ public:
 private:
 
     ros::NodeHandle nh_;
-    iirob_filters::LowPassFilterParameters params_;
 
     // Parameters
     double sampling_frequency_;
