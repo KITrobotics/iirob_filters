@@ -3,12 +3,12 @@ project(iirob_filters)
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
+  dynamic_reconfigure 
   eigen_conversions
   geometry_msgs
   roscpp
-  tf2_ros
   rosparam_handler
-  dynamic_reconfigure 
+  tf2_ros
 )
 
 find_package(Eigen3)
