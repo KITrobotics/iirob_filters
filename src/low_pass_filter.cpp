@@ -41,7 +41,7 @@
 #include <iirob_filters/low_pass_filter.h>
 
 LowPassFilter::LowPassFilter(double sampling_frequency, double damping_frequency, double damping_intensity, double divider)
-    : sampling_frequency_(sampling_frequency), damping_frequency_(damping_frequency), damping_intensity_(damping_intensity), divider_(divider), params_{ros::NodeHandle(nh_)}
+    : sampling_frequency_(sampling_frequency), damping_frequency_(damping_frequency), damping_intensity_(damping_intensity), divider_(divider)
 {
     init();
 }
@@ -62,7 +62,7 @@ bool LowPassFilter::init()
 
 bool LowPassFilter::init(const ros::NodeHandle &nh)
 {
-    params_.setNamespace(nh.getNamespace());
+    iirob_filters::LowPassFilterParameters params_{nh.getNamespace()};
     params_.fromParamServer();
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;

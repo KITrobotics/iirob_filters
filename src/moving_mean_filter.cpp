@@ -40,21 +40,17 @@
 
 #include <iirob_filters/moving_mean_filter.h>
 
-MovingMeanFilter::MovingMeanFilter(ros::NodeHandle nh) : nh_(nh), params_{ros::NodeHandle(nh_)} 
-{
-   params_.setNamespace(nh.getNamespace());
-   params_.fromParamServer();
-   divider_ = params_.divider;
-}
+MovingMeanFilter::MovingMeanFilter(ros::NodeHandle nh) : nh_(nh)
+{}
 
 MovingMeanFilter::MovingMeanFilter(int divider)
-  : divider_(divider), params_{ros::NodeHandle("~")}
+  : divider_(divider)
 {
 }
 
 bool MovingMeanFilter::init(const ros::NodeHandle &nh)
 {
-   params_.setNamespace(nh.getNamespace());
+   iirob_filters::MovingMeanParameters params_{nh.getNamespace()};
    params_.fromParamServer();
    divider_ = params_.divider;
 }
