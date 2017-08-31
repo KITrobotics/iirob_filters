@@ -1,4 +1,1 @@
-- git:
-    uri: 'https://github.com/iirob/rosparam_handler.git'
-    local-name: rosparam_handler
-    version: ns_set_get
+
