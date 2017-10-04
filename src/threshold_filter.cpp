@@ -38,9 +38,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
-
+//#include <pluginlib/class_list_macros.h>
 #include <iirob_filters/threshold_filter.h>
-
+namespace iirob_filters{
 ThresholdFilter::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {
   params_.fromParamServer();
@@ -113,3 +113,5 @@ geometry_msgs::WrenchStamped ThresholdFilter::applyFilter(const geometry_msgs::W
 
     return filtered_wrench;
 }
+}
+//PLUGINLIB_EXPORT_CLASS(ThresholdFilter, interface)

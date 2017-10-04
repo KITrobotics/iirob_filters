@@ -38,8 +38,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
-
+//#include <pluginlib/class_list_macros.h>
 #include <iirob_filters/gravity_compensation.h>
+namespace iirob_filters{
 
 GravityCompensator::GravityCompensator(ros::NodeHandle& nh) :
   nh_(nh), params_{nh_.getNamespace()+"/GravityCompensation"}
@@ -135,3 +136,5 @@ geometry_msgs::WrenchStamped GravityCompensator::compensate(const geometry_msgs:
 
   return compensated_wrench;
 }
+}
+//PLUGINLIB_EXPORT_CLASS(GravityCompensator, interface

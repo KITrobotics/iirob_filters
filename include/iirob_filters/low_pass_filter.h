@@ -45,42 +45,45 @@
 #include <geometry_msgs/WrenchStamped.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <iirob_filters/LowPassFilterParameters.h>
+#include <iirob_filters/FilterInterface.h>
 
 #include <math.h>
 
+namespace iirob_filters{
 
-class LowPassFilter
-{
-public:
+    class LowPassFilter: public FilterInterface
+    {
+    public:
 
-    LowPassFilter(double sampling_frequency = 0.0, double damping_frequency = 0.0, double damping_intensity = 0.0, double divider = 0.0);
+        LowPassFilter(double sampling_frequency = 0.0, double damping_frequency = 0.0, double damping_intensity = 0.0, double divider = 0.0);
+        //LowPassFilter();
 
-    bool init(const ros::NodeHandle &nh);
-    double applyFilter(double value);
+        bool init(const ros::NodeHandle &nh);
+        double applyFilter(double value);
 
-    geometry_msgs::WrenchStamped applyFilter(geometry_msgs::WrenchStamped &to_filter_wrench);
+        geometry_msgs::WrenchStamped applyFilter(geometry_msgs::WrenchStamped &to_filter_wrench);
 
-private:
+    private:
 
-    ros::NodeHandle nh_;
+        ros::NodeHandle nh_;
 
-    // Parameters
-    double sampling_frequency_;
-    double damping_frequency_;
-    double damping_intensity_;
-    int divider_;
+        // Parameters
+        double sampling_frequency_;
+        double damping_frequency_;
+        double damping_intensity_;
+        int divider_;
 
 
-    // Filter parametrs
-    double b1;
-    double a1;
-    int divider_counter;
+        // Filter parametrs
+        double b1;
+        double a1;
+        int divider_counter;
 
-    double filtered_value, filtered_old_value, old_value, mean_value;
+        double filtered_value, filtered_old_value, old_value, mean_value;
 
-    Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old, wrench_mean;
+        Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old, wrench_mean;
 
-    bool init();
-};
-
+        bool init();
+    };
+}
 #endif

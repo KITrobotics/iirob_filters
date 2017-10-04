@@ -44,30 +44,34 @@
 #include <ros/ros.h>
 #include <iirob_filters/MovingMeanParameters.h>
 #include <iirob_filters/MovingMeanConfig.h>
+#include <iirob_filters/FilterInterface.h>
 #include <math.h>
+namespace iirob_filters{
+    
 
-class MovingMeanFilter
-{
-public:
+    class MovingMeanFilter: public FilterInterface
+    {
+    public:
 
-  MovingMeanFilter(ros::NodeHandle nh);
+        //MovingMeanFilter();
+        MovingMeanFilter(ros::NodeHandle nh);
+      
+        MovingMeanFilter(int divider = 1);
 
-  MovingMeanFilter(int divider = 1);
+        double applyFilter(double value);
+        bool init(const ros::NodeHandle &nh);
 
-  double applyFilter(double value);
-  bool init(const ros::NodeHandle &nh);
+    private:
 
-private:
+        ros::NodeHandle nh_;
 
-  ros::NodeHandle nh_;
+        // Parameters
+        int divider_;
 
-  // Parameters
-  int divider_;
+        // Filter parametrs
+        int divider_counter;
 
-  // Filter parametrs
-  int divider_counter;
-
-  std::vector<double> values;
-};
-
+        std::vector<double> values;
+    };
+}
 #endif

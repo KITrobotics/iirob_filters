@@ -37,9 +37,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
-
+//#include <pluginlib/class_list_macros.h>
 #include <iirob_filters/moving_mean_filter.h>
-
+namespace iirob_filters{
 MovingMeanFilter::MovingMeanFilter(ros::NodeHandle nh) : nh_(nh)
 {}
 
@@ -47,6 +47,10 @@ MovingMeanFilter::MovingMeanFilter(int divider)
   : divider_(divider)
 {
 }
+
+/*MovingMeanFilter::MovingMeanFilter()
+{
+}*/
 
 bool MovingMeanFilter::init(const ros::NodeHandle &nh)
 {
@@ -72,3 +76,5 @@ double MovingMeanFilter::applyFilter(double value)
   
   return  sum / values.size();
 }
+}
+//PLUGINLIB_EXPORT_CLASS(MovingMeanFilter, interface)

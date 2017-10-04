@@ -37,14 +37,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
-
+//#include <pluginlib/class_list_macros.h>
 #include <iirob_filters/low_pass_filter.h>
-
+namespace iirob_filters{
 LowPassFilter::LowPassFilter(double sampling_frequency, double damping_frequency, double damping_intensity, double divider)
     : sampling_frequency_(sampling_frequency), damping_frequency_(damping_frequency), damping_intensity_(damping_intensity), divider_(divider)
 {
     init();
 }
+
+/*LowPassFilter::LowPassFilter()
+{
+        init();
+}*/
+
 
 bool LowPassFilter::init()
 {
@@ -122,3 +128,5 @@ geometry_msgs::WrenchStamped LowPassFilter::applyFilter(geometry_msgs::WrenchSta
         return filtered_wrench;
     }
 }
+}
+//PLUGINLIB_EXPORT_CLASS(LowPassFilter, interface)

@@ -23,9 +23,14 @@
   <depend>cmake_modules</depend>
   <depend>eigen_conversions</depend>
   <depend>geometry_msgs</depend>
+  <depend>pluginlib</depend> 
   <depend>roscpp</depend>
   <depend>tf2_ros</depend>
   <depend>rosparam_handler</depend>
   <depend>dynamic_reconfigure</depend>
+  
+  <export>
+    <controller_interface plugin="${prefix}/filters_plugin.xml"/>
+  </export>
 
-</package>
+  </package>

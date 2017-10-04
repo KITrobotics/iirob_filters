@@ -45,31 +45,34 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <iirob_filters/ThresholdParameters.h>
+#include <iirob_filters/FilterInterface.h>
 
-class ThresholdFilter
-{
+namespace iirob_filters{
 
-private:
-  ros::NodeHandle nh_;
-  iirob_filters::ThresholdParameters params_;
-  double threshold_;
-  double threshold_lin_;
-  double threshold_angular_;
+    class ThresholdFilter: public FilterInterface
+    {
 
-public:
-  ThresholdFilter();
-  ThresholdFilter(ros::NodeHandle nh);
+    private:
+        ros::NodeHandle nh_;
+        iirob_filters::ThresholdParameters params_;
+        double threshold_;
+        double threshold_lin_;
+        double threshold_angular_;
 
-  ThresholdFilter(double threshold);
+    public:
+        ThresholdFilter();
+        ThresholdFilter(ros::NodeHandle nh);
 
-  ThresholdFilter(double threshold_lin, double threshold_angular);
+        ThresholdFilter(double threshold);
 
-  bool init(const ros::NodeHandle &nh);
+        ThresholdFilter(double threshold_lin, double threshold_angular);
+
+        bool init(const ros::NodeHandle &nh);
 
 
-  double applyFilter(double value);
+        double applyFilter(double value);
 
-  geometry_msgs::WrenchStamped applyFilter(const geometry_msgs::WrenchStamped& to_filter_wrench);
-};
-
+        geometry_msgs::WrenchStamped applyFilter(const geometry_msgs::WrenchStamped& to_filter_wrench);
+    };
+}
 #endif

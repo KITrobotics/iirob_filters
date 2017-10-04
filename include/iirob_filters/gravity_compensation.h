@@ -48,42 +48,46 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <iirob_filters/GravityCompensationParameters.h>
+#include <iirob_filters/FilterInterface.h>
 
-class GravityCompensator
-{
+namespace iirob_filters{
 
-private:
+    class GravityCompensator: public FilterInterface
+    {
 
-  //ROS Objects
-  ros::NodeHandle nh_;
-  iirob_filters::GravityCompensationParameters params_;
+    private:
 
-  // Storage for Calibration Values
-  geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
-  double force_z_; // Gravitational Force
+    //ROS Objects
+    ros::NodeHandle nh_;
+    iirob_filters::GravityCompensationParameters params_;
 
-  // Frames for Transformation of Gravity / CoG Vector
-  std::string world_frame_;
+    // Storage for Calibration Values
+    geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
+    double force_z_; // Gravitational Force
 
-  // tf2 objects
-  tf2_ros::Buffer *p_tf_Buffer_;
-  tf2_ros::TransformListener *p_tf_Listener;
-  geometry_msgs::TransformStamped transform_, transform_back_;
+    // Frames for Transformation of Gravity / CoG Vector
+    std::string world_frame_;
+
+    // tf2 objects
+    tf2_ros::Buffer *p_tf_Buffer_;
+    tf2_ros::TransformListener *p_tf_Listener;
+    geometry_msgs::TransformStamped transform_, transform_back_;
   
-  uint _num_transform_errors;
+    uint _num_transform_errors;
 
-  bool init();
+    bool init();
 
-public:
+    public:
 
-  GravityCompensator(ros::NodeHandle& nh);
-  GravityCompensator();
-  bool init(const ros::NodeHandle &nh);
+    GravityCompensator(ros::NodeHandle& nh);
+    GravityCompensator();
+    bool init(const ros::NodeHandle &nh);
 
-  GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);
+    GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);
 
-  geometry_msgs::WrenchStamped compensate(const geometry_msgs::WrenchStamped &to_compensate_wrench);
+    geometry_msgs::WrenchStamped compensate(const geometry_msgs::WrenchStamped &to_compensate_wrench);
 
 };
+}
 
 #endif
