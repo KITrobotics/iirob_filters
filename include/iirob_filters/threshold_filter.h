@@ -113,8 +113,9 @@ bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
   if (fabs(data_in) > threshold_) {
     double sign = (data_in > 0) ? 1 : -1;
     data_out = threshold_*sign;
-    return true;
-}
+    
+  }
+  return true;
 }
 
 template <typename T>

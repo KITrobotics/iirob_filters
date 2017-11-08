@@ -26,11 +26,11 @@
   <depend>pluginlib</depend> 
   <depend>roscpp</depend>
   <depend>tf2_ros</depend>
-<!--  <depend>rosparam_handler</depend>-->
+  <depend>filters</depend>
   <depend>dynamic_reconfigure</depend>
   
   <export>
-    <controller_interface plugin="${prefix}/filters_plugin.xml"/>
+    <filters plugin="${prefix}/filters_plugin.xml"/>
   </export>
 
   </package>

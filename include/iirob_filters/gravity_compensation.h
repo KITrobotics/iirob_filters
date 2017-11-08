@@ -202,6 +202,7 @@ bool GravityCompensator<T>::update( const T & data_in, T& data_out)
 template <typename T>
 bool GravityCompensator<T>::update(const geometry_msgs::WrenchStamped& to_compensate_wrench, geometry_msgs::WrenchStamped& compensated_wrench)
 {
+  std::cout<<"here gc"<<std::endl;
   // Optimise this to get transform only once
   try
   {
