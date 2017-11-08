@@ -94,10 +94,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(FILES filters_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-install(FILES filters.xml
-              filters.yaml
-              filters.launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 #############
 ## Testing ##
 #############
