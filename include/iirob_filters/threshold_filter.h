@@ -45,31 +45,117 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <iirob_filters/ThresholdParameters.h>
+#include <filters/filter_base.h>
 
-class ThresholdFilter
+namespace iirob_filters{
+template <typename T>
+class ThresholdFilter: public filters::FilterBase<T>
 {
-
-private:
-  ros::NodeHandle nh_;
-  iirob_filters::ThresholdParameters params_;
-  double threshold_;
-  double threshold_lin_;
-  double threshold_angular_;
-
 public:
-  ThresholdFilter();
-  ThresholdFilter(ros::NodeHandle nh);
+        ThresholdFilter();
+        ThresholdFilter(ros::NodeHandle nh);
+        ThresholdFilter(double threshold);
+        ThresholdFilter(double threshold_lin, double threshold_angular);
+        
+        ~ThresholdFilter();
+        virtual bool configure();
+        virtual bool update(const T & data_in, T& data_out);
+        virtual bool update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench);
+    
+    private:
+        ros::NodeHandle nh_;
+        iirob_filters::ThresholdParameters params_;
+        double threshold_;
+        double threshold_lin_;
+        double threshold_angular_;
 
-  ThresholdFilter(double threshold);
-
-  ThresholdFilter(double threshold_lin, double threshold_angular);
-
-  bool init(const ros::NodeHandle &nh);
-
-
-  double applyFilter(double value);
-
-  geometry_msgs::WrenchStamped applyFilter(const geometry_msgs::WrenchStamped& to_filter_wrench);
 };
 
+template <typename T>
+ThresholdFilter<T>::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{nh_.getNamespace()+"/ThresholdFilter"}
+{
+/*  params_.fromParamServer();
+  threshold_lin_ = params_.linear_threshold;
+  threshold_angular_ = params_.angular_threshold;*/
+}
+
+template <typename T>
+ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter"}
+{
+}
+
+template <typename T>
+ThresholdFilter<T>::ThresholdFilter(double threshold) : threshold_(threshold), params_{nh_.getNamespace()+"/ThresholdFilter"}
+{}
+template <typename T>
+ThresholdFilter<T>::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{nh_.getNamespace()+"/ThresholdFilter"}
+{}
+
+template <typename T>
+ThresholdFilter<T>::~ThresholdFilter()
+{
+}
+
+template <typename T>
+bool ThresholdFilter<T>::configure()
+{
+    params_.fromParamServer();
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+    
+    return true;
+}
+template <typename T>
+bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
+{
+    data_out = data_in;
+
+  if (fabs(data_in) > threshold_) {
+    double sign = (data_in > 0) ? 1 : -1;
+    data_out = threshold_*sign;
+    
+  }
+  return true;
+}
+
+template <typename T>
+bool ThresholdFilter<T>::update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench)
+{    
+    filtered_wrench.header=to_filter_wrench.header;
+
+    if (fabs(to_filter_wrench.wrench.force.x) > threshold_lin_)
+    {
+        double sign = (to_filter_wrench.wrench.force.x > 0) ? 1 : -1;
+        filtered_wrench.wrench.force.x = to_filter_wrench.wrench.force.x-threshold_lin_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.force.y) > threshold_lin_)
+    {
+        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
+        filtered_wrench.wrench.force.y = to_filter_wrench.wrench.force.y-threshold_lin_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.force.z) > threshold_lin_)
+    {
+        double sign = (to_filter_wrench.wrench.force.z > 0) ? 1 : -1;
+        filtered_wrench.wrench.force.z = to_filter_wrench.wrench.force.z-threshold_lin_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.torque.x) > threshold_angular_)
+    {
+        double sign = (to_filter_wrench.wrench.torque.x > 0) ? 1 : -1;
+        filtered_wrench.wrench.torque.x = to_filter_wrench.wrench.torque.x-threshold_angular_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.torque.y) > threshold_angular_)
+    {
+        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
+        filtered_wrench.wrench.torque.y = to_filter_wrench.wrench.torque.y-threshold_angular_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.torque.z) > threshold_angular_)
+    {
+        double sign = (to_filter_wrench.wrench.torque.z > 0) ? 1 : -1;
+        filtered_wrench.wrench.torque.z = to_filter_wrench.wrench.torque.z-threshold_angular_*sign;
+    }
+  return true;
+}
+
+
+}
 #endif

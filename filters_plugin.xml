@@ -1,0 +1,28 @@
+<library path="lib/libiirob_filters">
+  <class name="iirob_filters/GravityCompensator" type="iirob_filters::GravityCompensator<double>" base_class_type="filters::FilterBase<double>">
+  <description>
+    This is a gravity compensation filter.
+  </description>
+  </class>
+  <!--<class name="iirob_filters/LowPassFilter" type="iirob_filters::LowPassFilter" base_class_type="filters::FilterBase<double>">
+  <description>
+    This is a gravity compensation filter.
+  </description>
+  </class>-->
+  <class name="iirob_filters/ThresholdFilter" type="iirob_filters::ThresholdFilter<double>" base_class_type="filters::FilterBase<double>">
+  <description>
+    This is a gravity compensation filter.
+  </description>
+  </class>
+  <!--<class name="iirob_filters/MovingMeanFilter" type="iirob_filters::MovingMeanFilter" base_class_type="iirob_filters::FilterInterface">
+  <description>
+    This is a gravity compensation filter.
+  </description>
+  </class>-->
+  <class name="iirob_filters/MultiChannelLowPassFilter" type="iirob_filters::MultiChannelLowPassFilter<double>"
+	    base_class_type="filters::MultiChannelFilterBase<double>">
+  <description>
+    This is a low pass filter which works on a stream of vectors of doubles.
+  </description>
+  </class>
+</library>
