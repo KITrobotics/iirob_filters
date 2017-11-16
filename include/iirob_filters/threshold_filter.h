@@ -99,15 +99,21 @@ ThresholdFilter<T>::~ThresholdFilter()
 template <typename T>
 bool ThresholdFilter<T>::configure()
 {
-    params_.fromParamServer();
+    /*params_.fromParamServer();
     threshold_lin_ = params_.linear_threshold;
-    threshold_angular_ = params_.angular_threshold;
+    threshold_angular_ = params_.angular_threshold;*/
+    if(!filters::FilterBase<T>::getParam("linear_threshold", threshold_lin_))
+	  ROS_ERROR("MultiChannelMeanFilter did not find param linear_threshold");
+    if(!filters::FilterBase<T>::getParam("angular_threshold", threshold_angular_))
+	  ROS_ERROR("MultiChannelMeanFilter did not find param angular_threshold");
+    std::cout<<"thresh "<<threshold_lin_<<" "<<threshold_angular_<<std::endl;
     
     return true;
 }
 template <typename T>
 bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
 {
+
     data_out = data_in;
 
   if (fabs(data_in) > threshold_) {
@@ -121,6 +127,7 @@ bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
 template <typename T>
 bool ThresholdFilter<T>::update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench)
 {    
+    //std::cout<<"thresh update"<<std::endl;
     filtered_wrench.header=to_filter_wrench.header;
 
     if (fabs(to_filter_wrench.wrench.force.x) > threshold_lin_)
@@ -155,7 +162,115 @@ bool ThresholdFilter<T>::update(const geometry_msgs::WrenchStamped& to_filter_wr
     }
   return true;
 }
+template <typename T>
+class MultiChannelThresholdFilter: public filters::MultiChannelFilterBase <T>
+{
+public:    
+  MultiChannelThresholdFilter();
+  ~MultiChannelThresholdFilter();
+  
+  virtual bool configure();
+  virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
+  
+private:
+
+    //ROS Objects
+    ros::NodeHandle nh_;
+
+    //iirob_filters::ThresholdParameters params_;
+    double threshold_;
+    double threshold_lin_;
+    double threshold_angular_;
+    
+    using filters::MultiChannelFilterBase<T>::number_of_channels_;
+};
+
+template <typename T>
+MultiChannelThresholdFilter<T>::MultiChannelThresholdFilter()
+{
+  
+};
+
+template <typename T>
+MultiChannelThresholdFilter<T>::~MultiChannelThresholdFilter()
+{
+};
 
 
+template <typename T>
+bool MultiChannelThresholdFilter<T>::configure()
+{
+  if(!filters::FilterBase<T>::getParam("linear_threshold", threshold_lin_))
+    ROS_ERROR("MultiChannelMeanFilter did not find param linear_threshold");
+  if(!filters::FilterBase<T>::getParam("angular_threshold", threshold_angular_))
+    ROS_ERROR("MultiChannelMeanFilter did not find param angular_threshold");
+  std::cout<<"thresh "<<threshold_lin_<<" "<<threshold_angular_<<std::endl;
+  return true;
+};
+
+template <typename T>
+bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
+{
+ 
+    //std::cout<<"thresh update"<<std::endl;
+      
+    if (data_in.size() != number_of_channels_ || data_out.size() != number_of_channels_)
+    {
+      ROS_ERROR("Configured with wrong size config:%d in:%d out:%d", number_of_channels_, (int)data_in.size(), (int)data_out.size());
+      return false;
+    }
+    geometry_msgs::WrenchStamped to_filter_wrench;
+    to_filter_wrench.wrench.force.x = data_in.at(0);
+    to_filter_wrench.wrench.force.y = data_in.at(1);
+    to_filter_wrench.wrench.force.z = data_in.at(2);
+    to_filter_wrench.wrench.torque.x = data_in.at(3);
+    to_filter_wrench.wrench.torque.y = data_in.at(4);
+    to_filter_wrench.wrench.torque.z = data_in.at(5);
+    //std::cout<<"wrench"<<to_filter_wrench<<std::endl;
+    to_filter_wrench.header.frame_id = "fts_base_link";
+    
+    geometry_msgs::WrenchStamped filtered_wrench;
+    
+    filtered_wrench = to_filter_wrench;
+
+    if (fabs(to_filter_wrench.wrench.force.x) > threshold_lin_)
+    {
+        double sign = (to_filter_wrench.wrench.force.x > 0) ? 1 : -1;
+        filtered_wrench.wrench.force.x = to_filter_wrench.wrench.force.x-threshold_lin_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.force.y) > threshold_lin_)
+    {
+        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
+        filtered_wrench.wrench.force.y = to_filter_wrench.wrench.force.y-threshold_lin_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.force.z) > threshold_lin_)
+    {
+        double sign = (to_filter_wrench.wrench.force.z > 0) ? 1 : -1;
+        filtered_wrench.wrench.force.z = to_filter_wrench.wrench.force.z-threshold_lin_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.torque.x) > threshold_angular_)
+    {
+        double sign = (to_filter_wrench.wrench.torque.x > 0) ? 1 : -1;
+        filtered_wrench.wrench.torque.x = to_filter_wrench.wrench.torque.x-threshold_angular_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.torque.y) > threshold_angular_)
+    {
+        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
+        filtered_wrench.wrench.torque.y = to_filter_wrench.wrench.torque.y-threshold_angular_*sign;
+    }
+    if (fabs(to_filter_wrench.wrench.torque.z) > threshold_angular_)
+    {
+        double sign = (to_filter_wrench.wrench.torque.z > 0) ? 1 : -1;
+        filtered_wrench.wrench.torque.z = to_filter_wrench.wrench.torque.z-threshold_angular_*sign;
+    }
+    data_out.clear();
+    data_out.push_back(filtered_wrench.wrench.force.x);
+    data_out.push_back(filtered_wrench.wrench.force.y);
+    data_out.push_back(filtered_wrench.wrench.force.z);
+    data_out.push_back(filtered_wrench.wrench.torque.x);
+    data_out.push_back(filtered_wrench.wrench.torque.y);
+    data_out.push_back(filtered_wrench.wrench.torque.z); 
+    return true;
+};
 }
 #endif

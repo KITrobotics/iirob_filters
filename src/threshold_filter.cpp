@@ -42,3 +42,4 @@
 #include <iirob_filters/threshold_filter.h>
 
 PLUGINLIB_EXPORT_CLASS(iirob_filters::ThresholdFilter<double>, filters::FilterBase<double>)
+PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelThresholdFilter<double>, filters::MultiChannelFilterBase<double>)

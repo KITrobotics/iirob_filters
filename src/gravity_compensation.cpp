@@ -42,3 +42,4 @@
 #include <iirob_filters/gravity_compensation.h>
 
 PLUGINLIB_EXPORT_CLASS(iirob_filters::GravityCompensator<double>, filters::FilterBase<double>)
+PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelGravityCompensator<double>, filters::MultiChannelFilterBase<double>)

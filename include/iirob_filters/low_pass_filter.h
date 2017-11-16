@@ -71,6 +71,7 @@ private:
         double damping_frequency_;
         double damping_intensity_;
         int divider_;
+        std::map<std::string,std::string> map_param_;
 
 
         // Filter parametrs
@@ -85,7 +86,7 @@ private:
 
 template <typename T>
 LowPassFilter<T>::LowPassFilter(double sampling_frequency, double damping_frequency, double damping_intensity, double divider)
-    : sampling_frequency_(sampling_frequency), damping_frequency_(damping_frequency), damping_intensity_(damping_intensity), divider_(divider), params_{nh_.getNamespace()+"/LowPassFilter/Force_x"}
+    : sampling_frequency_(sampling_frequency), damping_frequency_(damping_frequency), damping_intensity_(damping_intensity), divider_(divider),params_{nh_.getNamespace()+"/"}
 {
 
 }
@@ -107,6 +108,8 @@ bool LowPassFilter<T>::configure()
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
+//    map_param_ = params_.LowPassFilter;
+  //  std::cout<<"map_param:"<<map_param_<<std::endl;
     
     a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
     b1 = 1 - a1;
@@ -213,6 +216,7 @@ protected:
   double damping_frequency_;
   double damping_intensity_;
   int divider_;
+  std::map<std::string,std::string> map_param_;
   
   // Filter parametrs
   int divider_counter;
@@ -228,7 +232,7 @@ protected:
 
 template <typename T>
 MultiChannelLowPassFilter<T>::MultiChannelLowPassFilter(double divider):
- params_{nh_.getNamespace()+"/LowPassFilter/Force_x"}, divider_(divider)
+ params_{nh_.getNamespace()+"/"}, divider_(divider)
 {
 }
 
@@ -244,6 +248,16 @@ bool MultiChannelLowPassFilter<T>::configure()
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
+    //map_param_ = params_.LowPassFilter;
+    if(!filters::FilterBase<T>::getParam("SamplingFrequency", sampling_frequency_))
+	ROS_ERROR("MultiChannelMeanFilter did not find param SamplingFrequency");
+    if(!filters::FilterBase<T>::getParam("DampingFrequency", damping_frequency_))
+	ROS_ERROR("MultiChannelMeanFilter did not find param DampingFrequency");
+    if(!filters::FilterBase<T>::getParam("DampingIntensity", damping_intensity_))
+	ROS_ERROR("MultiChannelMeanFilter did not find param DampingIntensity");
+    
+//    std::cout<<"map_param:"<<map_param_<<std::endl;
+
     std::cout<<sampling_frequency_<<" "<<damping_frequency_<<" "<<damping_intensity_<<std::endl;
     
     a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
@@ -264,6 +278,7 @@ bool MultiChannelLowPassFilter<T>::configure()
 template <typename T>
 bool MultiChannelLowPassFilter<T>::update(const std::vector<T> & data_in, std::vector<T>& data_out)
 {
+  //std::cout<<"in lp update"<<std::endl;
   //  ROS_ASSERT(data_in.size() == width_);
   //ROS_ASSERT(data_out.size() == width_);
   if (data_in.size() != number_of_channels_ || data_out.size() != number_of_channels_)
