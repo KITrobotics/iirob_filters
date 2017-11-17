@@ -40,6 +40,5 @@
 #include <pluginlib/class_list_macros.h>
 #include <iirob_filters/low_pass_filter.h>
 
-
-PLUGINLIB_EXPORT_CLASS(iirob_filters::LowPassFilter<double>, filters::FilterBase<double>)
+PLUGINLIB_EXPORT_CLASS(iirob_filters::LowPassFilter<geometry_msgs::WrenchStamped>, filters::FilterBase<geometry_msgs::WrenchStamped>)
 PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelLowPassFilter<double>, filters::MultiChannelFilterBase<double>)

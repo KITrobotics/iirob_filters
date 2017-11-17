@@ -31,7 +31,6 @@ endif()
 
 generate_ros_parameter_files(
     cfg/Threshold.params
-    cfg/MovingMean.params
     cfg/LowPassFilter.params
     cfg/GravityCompensation.params
 )
@@ -56,15 +55,12 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/gravity_compensation.cpp
-  src/low_pass_filter.cpp
-  src/moving_mean_filter.cpp
+  src/low_pass_filter.cpp  
   src/threshold_filter.cpp
   
    include/${PROJECT_NAME}/low_pass_filter.h
-   include/${PROJECT_NAME}/moving_mean_filter.h
    include/${PROJECT_NAME}/gravity_compensation.h
    include/${PROJECT_NAME}/threshold_filter.h
-   include/${PROJECT_NAME}/FilterInterface.h   
 )
 
 add_dependencies(${PROJECT_NAME}
