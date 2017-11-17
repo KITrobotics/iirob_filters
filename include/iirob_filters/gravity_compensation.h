@@ -5,7 +5,7 @@
  * Intelligent Process Control and Robotics (IPR),
  * Karlsruhe Institute of Technology (KIT)
  *
- * Author: Alexandar Pollmann
+ * Author: Andreea Tulbure, email: andreea.tulbure@student.kit.edu
  *         Denis Štogl, email: denis.stogl@kit.edu
  *
  * Date of creation: 2015-2016
@@ -52,7 +52,6 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <iirob_filters/GravityCompensationParameters.h>
-#include <iirob_filters/FilterInterface.h>
 #include <filters/filter_base.h>
 
 namespace iirob_filters{
@@ -62,8 +61,6 @@ class GravityCompensator: public filters::FilterBase<T>
 {
 public:
     GravityCompensator();
-    GravityCompensator(ros::NodeHandle& nh);
-    GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);    
       
     /** \brief Destructor to clean up
     */
@@ -76,14 +73,10 @@ public:
     * \param data_out T array with length width
     */
     virtual bool update( const T & data_in, T& data_out);
-    
-    virtual bool update(const geometry_msgs::WrenchStamped& to_compensate_wrench, geometry_msgs::WrenchStamped& compensated_wrench);
 
 private:
-
-    //ROS Objects
     ros::NodeHandle nh_;
-    iirob_filters::GravityCompensationParameters params_;
+    //iirob_filters::GravityCompensationParameters params_;
 
     // Storage for Calibration Values
     geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
@@ -98,37 +91,11 @@ private:
     geometry_msgs::TransformStamped transform_, transform_back_;
   
     uint _num_transform_errors;
-    
-    //bool init();
 };
 
 template <typename T>
-GravityCompensator<T>::GravityCompensator(ros::NodeHandle& nh) :
-  nh_(nh), params_{nh_.getNamespace()+"/GravityCompensation"}
+GravityCompensator<T>::GravityCompensator()//: params_{nh_.getNamespace()+"/GravityCompensation"}
 {
- /* params_.fromParamServer();
-  cog_.vector.x = params_.CoG_x;
-  cog_.vector.y = params_.CoG_y;
-  cog_.vector.z = params_.CoG_z;
-  force_z_ = params_.force;
-  world_frame_ = params_.world_frame;
-  init();*/
-}
-
-template <typename T>
-GravityCompensator<T>::GravityCompensator(): params_{nh_.getNamespace()+"/GravityCompensation"}
-{
-}
-
-template <typename T>
-GravityCompensator<T>::GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z)
-  : world_frame_(world_frame), force_z_(force_z), params_{nh_.getNamespace()+"/GravityCompensation"}
-{
-  cog_.vector.x = cog_x;
-  cog_.vector.y = cog_y;
-  cog_.vector.z = cog_z;
-
-  //init();
 }
 
 template <typename T>
@@ -139,51 +106,6 @@ GravityCompensator<T>::~GravityCompensator()
 template <typename T>
 bool GravityCompensator<T>::configure()
 {
-    //nh.param<std::string>("default_param", default_param, "default_value"); default value version
-    /*std::vector<double> cog;    
-    if(nh_.hasParam("CoG"))
-    {
-        if (!filters::FilterBase<T>::getParam(std::string("CoG"),cog))
-        {
-            ROS_ERROR("GravityCompensator did not find param CoG");
-            return false;
-        }    
-    }
-    else
-    {
-        cog_.vector.x = 0;
-        cog_.vector.y = 0;
-        cog_.vector.z = 0;
-    }
-
-    if(nh_.hasParam("force"))
-    {
-        if (!filters::FilterBase<T>::getParam(std::string("force"),force_z_))
-        {
-            ROS_ERROR("GravityCompensator did not find param force");
-            return false;
-        }
-    }
-    else force_z_ = 0;
-    std::cout<<"param: "<<nh_.hasParam("fts/GravityCompensation/world_frame")<<std::endl;
-    if(nh_.hasParam("world_frame"))
-    {
-        if (!filters::FilterBase<T>::getParam(std::string("world_frame"),world_frame_))
-        {
-            ROS_ERROR("GravityCompensator did not find param world_frame");
-            return false;
-        }
-    }
-    else
-    {
-     world_frame_=" ";   
-    }*/
-    /*params_.fromParamServer();
-    cog_.vector.x = params_.CoG_x;
-    cog_.vector.y = params_.CoG_y;
-    cog_.vector.z = params_.CoG_z;
-    force_z_ = params_.force;*/
-    world_frame_ = params_.world_frame;
     if(!filters::FilterBase<T>::getParam("world_frame", world_frame_))
       ROS_ERROR("GravityCompensator did not find param world_frame");
     
@@ -193,26 +115,16 @@ bool GravityCompensator<T>::configure()
     p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
     
     _num_transform_errors = 0;
-
-    //init();
+    
     return true;
 }
 template <typename T>
-bool GravityCompensator<T>::update( const T & data_in, T& data_out)
-{
-  std::cout<<"here gc 1"<<std::endl;
-  return true;
-}
-
-template <typename T>
-bool GravityCompensator<T>::update(const geometry_msgs::WrenchStamped& to_compensate_wrench, geometry_msgs::WrenchStamped& compensated_wrench)
-{
-  std::cout<<"here gc"<<std::endl;
-  // Optimise this to get transform only once
+bool GravityCompensator<T>::update(const T & data_in, T& data_out)
+{  
   try
   {
-    transform_ = p_tf_Buffer_->lookupTransform(world_frame_, to_compensate_wrench.header.frame_id, ros::Time(0));
-    transform_back_ = p_tf_Buffer_->lookupTransform(to_compensate_wrench.header.frame_id, world_frame_, ros::Time(0));
+    transform_ = p_tf_Buffer_->lookupTransform(world_frame_, data_in.header.frame_id, ros::Time(0));
+    transform_back_ = p_tf_Buffer_->lookupTransform(data_in.header.frame_id, world_frame_, ros::Time(0));
     _num_transform_errors = 0;
   }
   catch (tf2::TransformException ex)
@@ -225,10 +137,10 @@ bool GravityCompensator<T>::update(const geometry_msgs::WrenchStamped& to_compen
   
   geometry_msgs::Vector3Stamped temp_force_transformed, temp_torque_transformed, temp_vector_in, temp_vector_out;
 
-  temp_vector_in.vector = to_compensate_wrench.wrench.force;
+  temp_vector_in.vector = data_in.wrench.force;
   tf2::doTransform(temp_vector_in, temp_force_transformed, transform_);
 
-  temp_vector_in.vector = to_compensate_wrench.wrench.torque;
+  temp_vector_in.vector = data_in.wrench.torque;
   tf2::doTransform(temp_vector_in, temp_torque_transformed, transform_);
   
   // Transform CoG Vector
@@ -243,14 +155,13 @@ bool GravityCompensator<T>::update(const geometry_msgs::WrenchStamped& to_compen
 
   // Copy Message and Compensate values for Gravity Force and Resulting Torque
   //geometry_msgs::WrenchStamped compensated_wrench;
-  compensated_wrench = to_compensate_wrench;
+  data_out = data_in;
   
   tf2::doTransform(temp_force_transformed, temp_vector_out, transform_back_);
-  compensated_wrench.wrench.force = temp_vector_out.vector;
+  data_out.wrench.force = temp_vector_out.vector;
 
   tf2::doTransform(temp_torque_transformed, temp_vector_out, transform_back_);
-  compensated_wrench.wrench.torque = temp_vector_out.vector;
-
+  data_out.wrench.torque = temp_vector_out.vector;
   return true;
 }
 
@@ -263,11 +174,10 @@ public:
   
   virtual bool configure();
   virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
-  virtual void setFrame(std::string frame_id);
+  //virtual void setFrame(std::string frame_id);
   
 private:
 
-    //ROS Objects
     ros::NodeHandle nh_;
     //iirob_filters::GravityCompensationParameters params_;
 
@@ -286,7 +196,6 @@ private:
   
     uint _num_transform_errors;
     
-    //bool init();
     using filters::MultiChannelFilterBase<T>::number_of_channels_;
 };
 
@@ -314,15 +223,13 @@ bool MultiChannelGravityCompensator<T>::configure()
   p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
     
   _num_transform_errors = 0;
-
-  //init();
+  
   return true;
 };
 
 template <typename T>
 bool MultiChannelGravityCompensator<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
 {
-  //std::cout<<"here gc"<<std::endl;
   // Optimise this to get transform only once
   if (data_in.size() != number_of_channels_ || data_out.size() != number_of_channels_)
   {
@@ -390,12 +297,7 @@ bool MultiChannelGravityCompensator<T>::update(const std::vector<T>& data_in, st
   data_out.push_back(compensated_wrench.wrench.torque.z);   
 
   return true;
-}
-
-template <typename T>
-void MultiChannelGravityCompensator<T>::setFrame(std::string frame_id){
-    frame_id_ = frame_id;
-    
 };
+
 }
 #endif

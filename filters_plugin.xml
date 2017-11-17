@@ -1,24 +1,34 @@
 <library path="lib/libiirob_filters">
-  <class name="iirob_filters/GravityCompensator" type="iirob_filters::GravityCompensator<double>" base_class_type="filters::FilterBase<double>">
+  <class name="iirob_filters/GravityCompensatorDouble" type="iirob_filters::GravityCompensator<double>" base_class_type="filters::FilterBase<double>">
   <description>
-    This is a gravity compensation filter.
+    This is a gravity compensator.
   </description>
   </class>
-  <!--<class name="iirob_filters/LowPassFilter" type="iirob_filters::LowPassFilter" base_class_type="filters::FilterBase<double>">
+  <class name="iirob_filters/LowPassFilterDouble" type="iirob_filters::LowPassFilter<double>" base_class_type="filters::FilterBase<double>">
   <description>
-    This is a gravity compensation filter.
-  </description>
-  </class>-->
-  <class name="iirob_filters/ThresholdFilter" type="iirob_filters::ThresholdFilter<double>" base_class_type="filters::FilterBase<double>">
-  <description>
-    This is a gravity compensation filter.
+    This is a low pass filter.
   </description>
   </class>
-  <!--<class name="iirob_filters/MovingMeanFilter" type="iirob_filters::MovingMeanFilter" base_class_type="iirob_filters::FilterInterface">
+  <class name="iirob_filters/ThresholdFilterDouble" type="iirob_filters::ThresholdFilter<double>" base_class_type="filters::FilterBase<double>">
   <description>
-    This is a gravity compensation filter.
+    This is a threshold filter.
   </description>
-  </class>-->
+  </class>
+  <class name="iirob_filters/LowPassFilterWrench" type="iirob_filters::LowPassFilter<geometry_msgs::WrenchStamped>" base_class_type="filters::FilterBase<geometry_msgs::WrenchStamped>">
+  <description>
+    This is a low pass filter working with geometry_msgs::WrenchStamped.
+  </description>
+  </class>
+    <class name="iirob_filters/GravityCompensatorWrench" type="iirob_filters::GravityCompensator<geometry_msgs::WrenchStamped>" base_class_type="filters::FilterBase<geometry_msgs::WrenchStamped>">
+  <description>
+    This is a gravity compensator working with geometry_msgs::WrenchStamped.
+  </description>
+  </class>
+  <class name="iirob_filters/ThresholdFilterWrench" type="iirob_filters::ThresholdFilter<geometry_msgs::WrenchStamped>" base_class_type="filters::FilterBase<geometry_msgs::WrenchStamped>">
+  <description>
+    This is a threshold filter working with geometry_msgs::WrenchStamped.
+  </description>
+  </class>
   <class name="iirob_filters/MultiChannelLowPassFilter" type="iirob_filters::MultiChannelLowPassFilter<double>"
 	    base_class_type="filters::MultiChannelFilterBase<double>">
   <description>
@@ -28,14 +38,12 @@
   <class name="iirob_filters/MultiChannelThresholdFilter" type="iirob_filters::MultiChannelThresholdFilter<double>"
 	    base_class_type="filters::MultiChannelFilterBase<double>">
   <description>
-    This is a low pass filter which works on a stream of vectors of doubles.
+    This is a threshold filter which works on a stream of vectors of doubles.
   </description>
   </class>
-  
   <class name="iirob_filters/MultiChannelGravityCompensator" type="iirob_filters::MultiChannelGravityCompensator<double>"
 	    base_class_type="filters::MultiChannelFilterBase<double>">
   <description>
-    This is a low pass filter which works on a stream of vectors of doubles.
+    This is a gravity compensator which works on a stream of vectors of doubles.
   </description>
-  </class>
 </library>

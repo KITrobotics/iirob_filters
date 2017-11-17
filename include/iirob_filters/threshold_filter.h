@@ -53,44 +53,44 @@ class ThresholdFilter: public filters::FilterBase<T>
 {
 public:
         ThresholdFilter();
-        ThresholdFilter(ros::NodeHandle nh);
-        ThresholdFilter(double threshold);
-        ThresholdFilter(double threshold_lin, double threshold_angular);
+        //ThresholdFilter(ros::NodeHandle nh);
+        //ThresholdFilter(double threshold);
+        //ThresholdFilter(double threshold_lin, double threshold_angular);
         
         ~ThresholdFilter();
         virtual bool configure();
         virtual bool update(const T & data_in, T& data_out);
-        virtual bool update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench);
+        //virtual bool update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench);
     
     private:
         ros::NodeHandle nh_;
-        iirob_filters::ThresholdParameters params_;
+        //iirob_filters::ThresholdParameters params_;
         double threshold_;
         double threshold_lin_;
         double threshold_angular_;
 
 };
 
-template <typename T>
+/*template <typename T>
 ThresholdFilter<T>::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {
-/*  params_.fromParamServer();
+  params_.fromParamServer();
   threshold_lin_ = params_.linear_threshold;
-  threshold_angular_ = params_.angular_threshold;*/
-}
+  threshold_angular_ = params_.angular_threshold;
+}*/
 
 template <typename T>
-ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter"}
+ThresholdFilter<T>::ThresholdFilter()//: params_{nh_.getNamespace()+"/ThresholdFilter"}
 {
 }
 
-template <typename T>
+/*template <typename T>
 ThresholdFilter<T>::ThresholdFilter(double threshold) : threshold_(threshold), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {}
 template <typename T>
 ThresholdFilter<T>::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {}
-
+*/
 template <typename T>
 ThresholdFilter<T>::~ThresholdFilter()
 {
@@ -110,55 +110,41 @@ bool ThresholdFilter<T>::configure()
     
     return true;
 }
+
 template <typename T>
 bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
-{
-
-    data_out = data_in;
-
-  if (fabs(data_in) > threshold_) {
-    double sign = (data_in > 0) ? 1 : -1;
-    data_out = threshold_*sign;
-    
-  }
-  return true;
-}
-
-template <typename T>
-bool ThresholdFilter<T>::update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench)
 {    
-    //std::cout<<"thresh update"<<std::endl;
-    filtered_wrench.header=to_filter_wrench.header;
+    data_out=data_in;
 
-    if (fabs(to_filter_wrench.wrench.force.x) > threshold_lin_)
+    if (fabs(data_in.wrench.force.x) > threshold_lin_)
     {
-        double sign = (to_filter_wrench.wrench.force.x > 0) ? 1 : -1;
-        filtered_wrench.wrench.force.x = to_filter_wrench.wrench.force.x-threshold_lin_*sign;
+        double sign = (data_in.wrench.force.x > 0) ? 1 : -1;
+        data_out.wrench.force.x = data_in.wrench.force.x-threshold_lin_*sign;
     }
-    if (fabs(to_filter_wrench.wrench.force.y) > threshold_lin_)
+    if (fabs(data_in.wrench.force.y) > threshold_lin_)
     {
-        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
-        filtered_wrench.wrench.force.y = to_filter_wrench.wrench.force.y-threshold_lin_*sign;
+        double sign = (data_in.wrench.force.y > 0) ? 1 : -1;
+        data_out.wrench.force.y = data_in.wrench.force.y-threshold_lin_*sign;
     }
-    if (fabs(to_filter_wrench.wrench.force.z) > threshold_lin_)
+    if (fabs(data_in.wrench.force.z) > threshold_lin_)
     {
-        double sign = (to_filter_wrench.wrench.force.z > 0) ? 1 : -1;
-        filtered_wrench.wrench.force.z = to_filter_wrench.wrench.force.z-threshold_lin_*sign;
+        double sign = (data_in.wrench.force.z > 0) ? 1 : -1;
+        data_out.wrench.force.z = data_in.wrench.force.z-threshold_lin_*sign;
     }
-    if (fabs(to_filter_wrench.wrench.torque.x) > threshold_angular_)
+    if (fabs(data_in.wrench.torque.x) > threshold_angular_)
     {
-        double sign = (to_filter_wrench.wrench.torque.x > 0) ? 1 : -1;
-        filtered_wrench.wrench.torque.x = to_filter_wrench.wrench.torque.x-threshold_angular_*sign;
+        double sign = (data_in.wrench.torque.x > 0) ? 1 : -1;
+        data_out.wrench.torque.x = data_in.wrench.torque.x-threshold_angular_*sign;
     }
-    if (fabs(to_filter_wrench.wrench.torque.y) > threshold_angular_)
+    if (fabs(data_in.wrench.torque.y) > threshold_angular_)
     {
-        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
-        filtered_wrench.wrench.torque.y = to_filter_wrench.wrench.torque.y-threshold_angular_*sign;
+        double sign = (data_in.wrench.force.y > 0) ? 1 : -1;
+        data_out.wrench.torque.y = data_in.wrench.torque.y-threshold_angular_*sign;
     }
-    if (fabs(to_filter_wrench.wrench.torque.z) > threshold_angular_)
+    if (fabs(data_in.wrench.torque.z) > threshold_angular_)
     {
-        double sign = (to_filter_wrench.wrench.torque.z > 0) ? 1 : -1;
-        filtered_wrench.wrench.torque.z = to_filter_wrench.wrench.torque.z-threshold_angular_*sign;
+        double sign = (data_in.wrench.torque.z > 0) ? 1 : -1;
+        data_out.wrench.torque.z = data_in.wrench.torque.z-threshold_angular_*sign;
     }
   return true;
 }
@@ -212,7 +198,6 @@ template <typename T>
 bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
 {
  
-    //std::cout<<"thresh update"<<std::endl;
       
     if (data_in.size() != number_of_channels_ || data_out.size() != number_of_channels_)
     {
@@ -226,7 +211,7 @@ bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::
     to_filter_wrench.wrench.torque.x = data_in.at(3);
     to_filter_wrench.wrench.torque.y = data_in.at(4);
     to_filter_wrench.wrench.torque.z = data_in.at(5);
-    //std::cout<<"wrench"<<to_filter_wrench<<std::endl;
+    
     to_filter_wrench.header.frame_id = "fts_base_link";
     
     geometry_msgs::WrenchStamped filtered_wrench;
