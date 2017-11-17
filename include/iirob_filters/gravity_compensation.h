@@ -7,7 +7,7 @@
  *
  * Author: Andreea Tulbure, email: andreea.tulbure@student.kit.edu
  *         Denis Štogl, email: denis.stogl@kit.edu
- *         Alexander Pollmann
+ *         Alexandar Pollmann
  *
  * Date of creation: 2015-2017
  *
