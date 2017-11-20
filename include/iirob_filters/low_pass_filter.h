@@ -76,7 +76,7 @@ private:
         double b1;
         double a1;
         int divider_counter;
-        //iirob_filters::LowPassFilterParameters params_;
+        iirob_filters::LowPassFilterParameters params_;
         double filtered_value, filtered_old_value, old_value, mean_value;
 
         Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old, wrench_mean;
@@ -84,7 +84,7 @@ private:
 
 
 template <typename T>
-LowPassFilter<T>::LowPassFilter(): divider_(1.0)
+LowPassFilter<T>::LowPassFilter():params_{nh_.getNamespace()+"/LowPassFilter/params"}
 {
 }
 
@@ -96,12 +96,19 @@ LowPassFilter<T>::~LowPassFilter()
 template <typename T>
 bool LowPassFilter<T>::configure()
 {
-    if(!filters::FilterBase<T>::getParam("SamplingFrequency", sampling_frequency_))
-	ROS_ERROR("LowPassFilter did not find param SamplingFrequency");
-    if(!filters::FilterBase<T>::getParam("DampingFrequency", damping_frequency_))
-	ROS_ERROR("LowPassFilter did not find param DampingFrequency");
-    if(!filters::FilterBase<T>::getParam("DampingIntensity", damping_intensity_))
-	ROS_ERROR("LowPassFilter did not find param DampingIntensity");
+    params_.fromParamServer();
+    sampling_frequency_ = params_.SamplingFrequency;
+    damping_frequency_ = params_.DampingFrequency;
+    damping_intensity_ = params_.DampingIntensity;
+    divider_ = params_.divider;
+    if(sampling_frequency_ == 0)
+        ROS_ERROR("LowPassFilter did not find param SamplingFrequency");
+    if(damping_frequency_ == 0)
+        ROS_ERROR("LowPassFilter did not find param DampingFrequency");
+    if(damping_intensity_ == 0)
+        ROS_ERROR("LowPassFilter did not find param DampingIntensity");
+    if(divider_ == 0)
+        ROS_ERROR("Divider value not correct - cannot be 0. Check .param or .yaml files");
     
     a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
     b1 = 1 - a1;

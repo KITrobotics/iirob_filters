@@ -77,7 +77,7 @@ public:
 
 private:
     ros::NodeHandle nh_;
-    //iirob_filters::GravityCompensationParameters params_;
+    iirob_filters::GravityCompensationParameters params_;
 
     // Storage for Calibration Values
     geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
@@ -95,7 +95,7 @@ private:
 };
 
 template <typename T>
-GravityCompensator<T>::GravityCompensator()//: params_{nh_.getNamespace()+"/GravityCompensation"}
+GravityCompensator<T>::GravityCompensator(): params_{nh_.getNamespace()+"/GravityCompensation/params"}
 {
 }
 
@@ -107,14 +107,23 @@ GravityCompensator<T>::~GravityCompensator()
 template <typename T>
 bool GravityCompensator<T>::configure()
 {
-    if(!filters::FilterBase<T>::getParam("world_frame", world_frame_))
+    params_.fromParamServer();
+    if(params_.world_frame == " ")
       ROS_ERROR("GravityCompensator did not find param world_frame");
-    
-    std::cout<<"world_frame: "<<world_frame_<<std::endl;
+    if(params_.sensor_frame == " ")
+      ROS_DEBUG("GravityCompensator did not find param sensor_frame");
+    if(params_.CoG_x == 0)
+      ROS_DEBUG("GravityCompensator did not find param CoG_x");
+    if(params_.CoG_y == 0)
+      ROS_DEBUG("GravityCompensator did not find param CoG_y");
+    if(params_.CoG_z == 0)
+      ROS_DEBUG("GravityCompensator did not find param CoG_z");
+    if(params_.force == 0)
+      ROS_DEBUG("GravityCompensator did not find param force");
     
     p_tf_Buffer_ = new tf2_ros::Buffer;
     p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
-    
+    world_frame_ = params_.world_frame;
     _num_transform_errors = 0;
     
     return true;

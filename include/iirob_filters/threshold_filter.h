@@ -60,11 +60,10 @@ public:
         ~ThresholdFilter();
         virtual bool configure();
         virtual bool update(const T & data_in, T& data_out);
-        //virtual bool update(const geometry_msgs::WrenchStamped& to_filter_wrench, geometry_msgs::WrenchStamped& filtered_wrench);
     
     private:
         ros::NodeHandle nh_;
-        //iirob_filters::ThresholdParameters params_;
+        iirob_filters::ThresholdParameters params_;
         double threshold_;
         double threshold_lin_;
         double threshold_angular_;
@@ -80,7 +79,7 @@ ThresholdFilter<T>::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{nh_.g
 }*/
 
 template <typename T>
-ThresholdFilter<T>::ThresholdFilter()//: params_{nh_.getNamespace()+"/ThresholdFilter"}
+ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
 {
 }
 
@@ -91,6 +90,7 @@ template <typename T>
 ThresholdFilter<T>::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{nh_.getNamespace()+"/ThresholdFilter"}
 {}
 */
+
 template <typename T>
 ThresholdFilter<T>::~ThresholdFilter()
 {
@@ -99,14 +99,14 @@ ThresholdFilter<T>::~ThresholdFilter()
 template <typename T>
 bool ThresholdFilter<T>::configure()
 {
-    /*params_.fromParamServer();
+    params_.fromParamServer();
     threshold_lin_ = params_.linear_threshold;
-    threshold_angular_ = params_.angular_threshold;*/
-    if(!filters::FilterBase<T>::getParam("linear_threshold", threshold_lin_))
-	  ROS_ERROR("MultiChannelMeanFilter did not find param linear_threshold");
-    if(!filters::FilterBase<T>::getParam("angular_threshold", threshold_angular_))
-	  ROS_ERROR("MultiChannelMeanFilter did not find param angular_threshold");
-    std::cout<<"thresh "<<threshold_lin_<<" "<<threshold_angular_<<std::endl;
+    threshold_angular_ = params_.angular_threshold;
+    if(threshold_lin_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param linear_threshold");
+    if(threshold_angular_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");
+    
     
     return true;
 }

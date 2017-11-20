@@ -62,7 +62,9 @@ public:
 private:
 
         ros::NodeHandle nh_;
+        
         // Parameters
+        iirob_filters::MovingMeanParameters params_;
         int divider_;
 
         // Filter parametrs
@@ -71,7 +73,7 @@ private:
 };
     
 template <typename T>
-MovingMeanFilter<T>::MovingMeanFilter()
+MovingMeanFilter<T>::MovingMeanFilter():params_{nh_.getNamespace()+"/MovingMeanFilter/params"}
 {
 }
 
@@ -83,8 +85,10 @@ MovingMeanFilter<T>::~MovingMeanFilter()
 template <typename T>
 bool MovingMeanFilter<T>::configure()
 {
-    if(!filters::FilterBase<T>::getParam("divider", divider_))
-	ROS_ERROR("MovingMeanFilter did not find param divider");
+    params_.fromParamServer();
+    divider_ = params_.divider;
+    if(divider_ == 0)
+        ROS_ERROR("MovingMeanFilter did not find param divider");
     return true;
 }
 
