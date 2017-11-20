@@ -46,4 +46,11 @@
   <description>
     This is a gravity compensator which works on a stream of vectors of doubles.
   </description>
+  </class>
+  <class name="iirob_filters/MovingMeanFilterWrench" type="iirob_filters::MovingMeanFilter<geometry_msgs::WrenchStamped>"
+	    base_class_type="filters::FilterBase<geometry_msgs::WrenchStamped>">
+  <description>
+    This is a moving mean which works with geometry_msgs::WrenchStamped.
+  </description>
+  </class>
 </library>
