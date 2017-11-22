@@ -45,6 +45,8 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <iirob_filters/ThresholdParameters.h>
+#include <iirob_filters/ThresholdConfig.h>
+#include <dynamic_reconfigure/server.h>
 #include <filters/filter_base.h>
 
 namespace iirob_filters{
@@ -53,9 +55,6 @@ class ThresholdFilter: public filters::FilterBase<T>
 {
 public:
         ThresholdFilter();
-        //ThresholdFilter(ros::NodeHandle nh);
-        //ThresholdFilter(double threshold);
-        //ThresholdFilter(double threshold_lin, double threshold_angular);
         
         ~ThresholdFilter();
         virtual bool configure();
@@ -67,29 +66,18 @@ public:
         double threshold_;
         double threshold_lin_;
         double threshold_angular_;
+                  
+        dynamic_reconfigure::Server<iirob_filters::ThresholdConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
+
+        void reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level);
 
 };
-
-/*template <typename T>
-ThresholdFilter<T>::ThresholdFilter(ros::NodeHandle nh) : nh_(nh), params_{nh_.getNamespace()+"/ThresholdFilter"}
-{
-  params_.fromParamServer();
-  threshold_lin_ = params_.linear_threshold;
-  threshold_angular_ = params_.angular_threshold;
-}*/
 
 template <typename T>
 ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
 {
+    reconfigCalibrationSrv_.setCallback(boost::bind(&ThresholdFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
-
-/*template <typename T>
-ThresholdFilter<T>::ThresholdFilter(double threshold) : threshold_(threshold), params_{nh_.getNamespace()+"/ThresholdFilter"}
-{}
-template <typename T>
-ThresholdFilter<T>::ThresholdFilter(double threshold_lin, double threshold_angular) : threshold_lin_(threshold_lin), threshold_angular_(threshold_angular), params_{nh_.getNamespace()+"/ThresholdFilter"}
-{}
-*/
 
 template <typename T>
 ThresholdFilter<T>::~ThresholdFilter()
@@ -100,6 +88,7 @@ template <typename T>
 bool ThresholdFilter<T>::configure()
 {
     params_.fromParamServer();
+    threshold_ = params_.threshold;
     threshold_lin_ = params_.linear_threshold;
     threshold_angular_ = params_.angular_threshold;
     if(threshold_lin_ == 0)
@@ -113,8 +102,20 @@ bool ThresholdFilter<T>::configure()
 
 template <typename T>
 bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
+{        
+    data_out = data_in;
+  
+    if (fabs(data_in) > threshold_) {
+        double sign = (data_in > 0) ? 1 : -1;
+        data_out = threshold_*sign;
+    }
+    return true;
+}
+
+template <>
+inline bool ThresholdFilter<geometry_msgs::WrenchStamped>::update(const geometry_msgs::WrenchStamped & data_in, geometry_msgs::WrenchStamped& data_out)
 {    
-    data_out=data_in;
+    data_out = data_in;
 
     if (fabs(data_in.wrench.force.x) > threshold_lin_)
     {
@@ -148,8 +149,18 @@ bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
     }
   return true;
 }
+
 template <typename T>
-class MultiChannelThresholdFilter: public filters::MultiChannelFilterBase <T>
+void ThresholdFilter<T>::reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level)
+{
+    //params_.fromConfig(config);
+    threshold_ = params_.threshold;
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+};
+
+template <typename T>
+class MultiChannelThresholdFilter: public filters::MultiChannelFilterBase<T>
 {
 public:    
   MultiChannelThresholdFilter();
@@ -163,7 +174,7 @@ private:
     //ROS Objects
     ros::NodeHandle nh_;
 
-    //iirob_filters::ThresholdParameters params_;
+    iirob_filters::ThresholdParameters params_;
     double threshold_;
     double threshold_lin_;
     double threshold_angular_;
@@ -172,27 +183,30 @@ private:
 };
 
 template <typename T>
-MultiChannelThresholdFilter<T>::MultiChannelThresholdFilter()
+MultiChannelThresholdFilter<T>::MultiChannelThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
 {
-  
-};
+}
 
 template <typename T>
 MultiChannelThresholdFilter<T>::~MultiChannelThresholdFilter()
 {
-};
+}
 
 
 template <typename T>
 bool MultiChannelThresholdFilter<T>::configure()
 {
-  if(!filters::FilterBase<T>::getParam("linear_threshold", threshold_lin_))
-    ROS_ERROR("MultiChannelMeanFilter did not find param linear_threshold");
-  if(!filters::FilterBase<T>::getParam("angular_threshold", threshold_angular_))
-    ROS_ERROR("MultiChannelMeanFilter did not find param angular_threshold");
-  std::cout<<"thresh "<<threshold_lin_<<" "<<threshold_angular_<<std::endl;
+    params_.fromParamServer();
+    threshold_ = params_.threshold;
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+    if(threshold_lin_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param linear_threshold");
+    if(threshold_angular_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");
+    
   return true;
-};
+}
 
 template <typename T>
 bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
@@ -204,57 +218,15 @@ bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::
       ROS_ERROR("Configured with wrong size config:%d in:%d out:%d", number_of_channels_, (int)data_in.size(), (int)data_out.size());
       return false;
     }
-    geometry_msgs::WrenchStamped to_filter_wrench;
-    to_filter_wrench.wrench.force.x = data_in.at(0);
-    to_filter_wrench.wrench.force.y = data_in.at(1);
-    to_filter_wrench.wrench.force.z = data_in.at(2);
-    to_filter_wrench.wrench.torque.x = data_in.at(3);
-    to_filter_wrench.wrench.torque.y = data_in.at(4);
-    to_filter_wrench.wrench.torque.z = data_in.at(5);
     
-    to_filter_wrench.header.frame_id = "fts_base_link";
-    
-    geometry_msgs::WrenchStamped filtered_wrench;
-    
-    filtered_wrench = to_filter_wrench;
-
-    if (fabs(to_filter_wrench.wrench.force.x) > threshold_lin_)
+    for(int i = 0; i < data_in.size(); i++)
     {
-        double sign = (to_filter_wrench.wrench.force.x > 0) ? 1 : -1;
-        filtered_wrench.wrench.force.x = to_filter_wrench.wrench.force.x-threshold_lin_*sign;
+        data_out[i] = data_in[i];
+        if (fabs(data_in[i]) > threshold_) {
+             double sign = (data_in[i] > 0) ? 1 : -1;
+             data_out[i] = threshold_*sign;
+        }
     }
-    if (fabs(to_filter_wrench.wrench.force.y) > threshold_lin_)
-    {
-        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
-        filtered_wrench.wrench.force.y = to_filter_wrench.wrench.force.y-threshold_lin_*sign;
-    }
-    if (fabs(to_filter_wrench.wrench.force.z) > threshold_lin_)
-    {
-        double sign = (to_filter_wrench.wrench.force.z > 0) ? 1 : -1;
-        filtered_wrench.wrench.force.z = to_filter_wrench.wrench.force.z-threshold_lin_*sign;
-    }
-    if (fabs(to_filter_wrench.wrench.torque.x) > threshold_angular_)
-    {
-        double sign = (to_filter_wrench.wrench.torque.x > 0) ? 1 : -1;
-        filtered_wrench.wrench.torque.x = to_filter_wrench.wrench.torque.x-threshold_angular_*sign;
-    }
-    if (fabs(to_filter_wrench.wrench.torque.y) > threshold_angular_)
-    {
-        double sign = (to_filter_wrench.wrench.force.y > 0) ? 1 : -1;
-        filtered_wrench.wrench.torque.y = to_filter_wrench.wrench.torque.y-threshold_angular_*sign;
-    }
-    if (fabs(to_filter_wrench.wrench.torque.z) > threshold_angular_)
-    {
-        double sign = (to_filter_wrench.wrench.torque.z > 0) ? 1 : -1;
-        filtered_wrench.wrench.torque.z = to_filter_wrench.wrench.torque.z-threshold_angular_*sign;
-    }
-    data_out.clear();
-    data_out.push_back(filtered_wrench.wrench.force.x);
-    data_out.push_back(filtered_wrench.wrench.force.y);
-    data_out.push_back(filtered_wrench.wrench.force.z);
-    data_out.push_back(filtered_wrench.wrench.torque.x);
-    data_out.push_back(filtered_wrench.wrench.torque.y);
-    data_out.push_back(filtered_wrench.wrench.torque.z); 
     return true;
 };
 }

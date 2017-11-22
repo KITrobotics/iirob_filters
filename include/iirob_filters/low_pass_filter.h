@@ -45,6 +45,8 @@
 #include <geometry_msgs/WrenchStamped.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <iirob_filters/LowPassFilterParameters.h>
+#include <iirob_filters/LowPassFilterConfig.h>
+#include <dynamic_reconfigure/server.h>
 #include <filters/filter_base.h>
 
 #include <math.h>
@@ -58,8 +60,8 @@ public:
 
         ~LowPassFilter();
         virtual bool configure();
-        virtual bool update(const T & data_in, T& data_out);
-
+        virtual bool update(const T& data_in, T& data_out);
+        
 private:
 
         ros::NodeHandle nh_;
@@ -77,15 +79,21 @@ private:
         double a1;
         int divider_counter;
         iirob_filters::LowPassFilterParameters params_;
-        double filtered_value, filtered_old_value, old_value, mean_value;
+        double filtered_value, filtered_old_value, old_value;
 
-        Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old, wrench_mean;
+        Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old;
+          
+        dynamic_reconfigure::Server<iirob_filters::LowPassFilterConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
+
+        void reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level);
+  
 };
 
 
 template <typename T>
 LowPassFilter<T>::LowPassFilter():params_{nh_.getNamespace()+"/LowPassFilter/params"}
 {
+    reconfigCalibrationSrv_.setCallback(boost::bind(&LowPassFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
 
 template <typename T>
@@ -100,7 +108,7 @@ bool LowPassFilter<T>::configure()
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
-    divider_ = params_.divider;
+    divider_ = params_.divider;    
     if(sampling_frequency_ == 0)
         ROS_ERROR("LowPassFilter did not find param SamplingFrequency");
     if(damping_frequency_ == 0)
@@ -115,22 +123,19 @@ bool LowPassFilter<T>::configure()
     
     divider_counter = 1;
     // Initialize storage Vectors
-    filtered_value = filtered_old_value = old_value = mean_value = 0;
+    filtered_value = filtered_old_value = old_value = 0;
     for (int ii=0; ii<6; ii++)
     {
-        msg_filtered(ii) = msg_filtered_old(ii) = msg_old(ii) = wrench_mean(ii) = 0;
+        msg_filtered(ii) = msg_filtered_old(ii) = msg_old(ii) = 0;
     }
     return true;
 }
 
-template <typename T>
-bool LowPassFilter<T>::update(const T & data_in, T& data_out)
-{
-    
+template<>
+inline bool LowPassFilter<geometry_msgs::WrenchStamped>::update(const geometry_msgs::WrenchStamped& data_in, geometry_msgs::WrenchStamped& data_out){    
     // IIR Filter
     msg_filtered = b1 * msg_old + a1 * msg_filtered_old;
-    msg_filtered_old = msg_filtered;
-    //std::cout<<"data in "<<data_in<<std::endl;
+    msg_filtered_old = msg_filtered;    
 
     //TODO use wrenchMsgToEigen
     msg_old[0] = data_in.wrench.force.x;
@@ -139,32 +144,35 @@ bool LowPassFilter<T>::update(const T & data_in, T& data_out)
     msg_old[3] = data_in.wrench.torque.x;
     msg_old[4] = data_in.wrench.torque.y;
     msg_old[5] = data_in.wrench.torque.z;
+    
+    data_out.wrench.force.x = msg_filtered[0];
+    data_out.wrench.force.y = msg_filtered[1];
+    data_out.wrench.force.z = msg_filtered[2];
+    data_out.wrench.torque.x = msg_filtered[3];
+    data_out.wrench.torque.y = msg_filtered[4];
+    data_out.wrench.torque.z = msg_filtered[5];
+    return true;
+    
+}
 
-    // Mean Filter
-    wrench_mean += msg_filtered;
-    if (divider_counter < divider_)
-    {
-        divider_counter++;
-    }
-    else
-    {
-        wrench_mean /= divider_;
-        divider_counter = 1;
+template<typename T>
+bool LowPassFilter<T>::update(const T& data_in, T& data_out)
+{    
+    data_out = b1 * old_value + a1 * filtered_old_value;
+    filtered_old_value = data_out;
+    old_value = data_in;
+    
+    return true;
+}
 
-        //TODO use wrenchEigenToMsg
-        data_out.wrench.force.x = wrench_mean[0];
-        data_out.wrench.force.y = wrench_mean[1];
-        data_out.wrench.force.z = wrench_mean[2];
-        data_out.wrench.torque.x = wrench_mean[3];
-        data_out.wrench.torque.y = wrench_mean[4];
-        data_out.wrench.torque.z = wrench_mean[5];
-
-        data_out.header = data_in.header;
-        wrench_mean.setZero();
-   }
-   return true;
+template <typename T>
+void LowPassFilter<T>::reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level)
+{
+    //params_.fromConfig(config);
+    sampling_frequency_ = params_.SamplingFrequency;
+    damping_intensity_ = params_.DampingFrequency;
+    damping_intensity_ = params_.DampingIntensity;
 };
-
 
 /* A lp filter which works on double arrays.
  *
@@ -202,16 +210,15 @@ protected:
   double b1;
   double a1;
   
-  //iirob_filters::LowPassFilterParameters params_;  
-  double filtered_value, filtered_old_value, old_value, mean_value;
-  Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old, wrench_mean;
+  iirob_filters::LowPassFilterParameters params_;  
+  std::vector<T> filtered_value, filtered_old_value, old_value;
   
   using filters::MultiChannelFilterBase<T>::number_of_channels_;           
 };
 
 
 template <typename T>
-MultiChannelLowPassFilter<T>::MultiChannelLowPassFilter(): divider_(1.0)
+MultiChannelLowPassFilter<T>::MultiChannelLowPassFilter():params_{nh_.getNamespace()+"/LowPassFilter/params"}
 {
 }
 
@@ -223,23 +230,29 @@ MultiChannelLowPassFilter<T>::~MultiChannelLowPassFilter()
 template <typename T>
 bool MultiChannelLowPassFilter<T>::configure()
 {
-
-    if(!filters::FilterBase<T>::getParam("SamplingFrequency", sampling_frequency_))
-	ROS_ERROR("MultiChannelLowPassFilter did not find param SamplingFrequency");
-    if(!filters::FilterBase<T>::getParam("DampingFrequency", damping_frequency_))
-	ROS_ERROR("MultiChannelLowPassFilter did not find param DampingFrequency");
-    if(!filters::FilterBase<T>::getParam("DampingIntensity", damping_intensity_))
-	ROS_ERROR("MultiChannelLowPassFilter did not find param DampingIntensity");
+    params_.fromParamServer();
+    sampling_frequency_ = params_.SamplingFrequency;
+    damping_frequency_ = params_.DampingFrequency;
+    damping_intensity_ = params_.DampingIntensity;
+    divider_ = params_.divider;
+    if(sampling_frequency_ == 0)
+        ROS_ERROR("MultiChannelLowPassFilter did not find param SamplingFrequency");
+    if(damping_frequency_ == 0)
+        ROS_ERROR("MultiChannelLowPassFilter did not find param DampingFrequency");
+    if(damping_intensity_ == 0)
+        ROS_ERROR("MultiChannelLowPassFilter did not find param DampingIntensity");
+    if(divider_ == 0)
+        ROS_ERROR("Divider value not correct - cannot be 0. Check .param or .yaml files");
     
     a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
     b1 = 1 - a1;
     divider_counter = 1;
     
     // Initialize storage Vectors
-    filtered_value = filtered_old_value = old_value = mean_value = 0;
-    for (int ii=0; ii<6; ii++)
+    
+    for (int ii=0; ii<number_of_channels_; ii++)
     {
-        msg_filtered(ii) = msg_filtered_old(ii) = msg_old(ii) = wrench_mean(ii) = 0;
+        filtered_value[ii] = filtered_old_value[ii] = old_value[ii] = 0;
     }
   return true;
 }
@@ -254,60 +267,14 @@ bool MultiChannelLowPassFilter<T>::update(const std::vector<T> & data_in, std::v
     ROS_ERROR("Configured with wrong size config:%d in:%d out:%d", number_of_channels_, (int)data_in.size(), (int)data_out.size());
     return false;
   }
-    geometry_msgs::WrenchStamped to_filter_wrench;
-    to_filter_wrench.wrench.force.x = data_in.at(0);
-    to_filter_wrench.wrench.force.y = data_in.at(1);
-    to_filter_wrench.wrench.force.z = data_in.at(2);
-    to_filter_wrench.wrench.torque.x = data_in.at(3);
-    to_filter_wrench.wrench.torque.y = data_in.at(4);
-    to_filter_wrench.wrench.torque.z = data_in.at(5);
-    
-    // IIR Filter
-    msg_filtered = b1 * msg_old + a1 * msg_filtered_old;
-    msg_filtered_old = msg_filtered;
-
-    //TODO use wrenchMsgToEigen
-    msg_old[0] = to_filter_wrench.wrench.force.x;
-    msg_old[1] = to_filter_wrench.wrench.force.y;
-    msg_old[2] = to_filter_wrench.wrench.force.z;
-    msg_old[3] = to_filter_wrench.wrench.torque.x;
-    msg_old[4] = to_filter_wrench.wrench.torque.y;
-    msg_old[5] = to_filter_wrench.wrench.torque.z;
-
-    // Mean Filter
-    wrench_mean += msg_filtered;
-    if (divider_counter < divider_)
-    {
-        divider_counter++;
-    }
-    else
-    {
-        wrench_mean /= divider_;
-        divider_counter = 1;
-
-        geometry_msgs::WrenchStamped filtered_wrench;
-        //TODO use wrenchEigenToMsg
-        filtered_wrench.wrench.force.x = wrench_mean[0];
-        filtered_wrench.wrench.force.y = wrench_mean[1];
-        filtered_wrench.wrench.force.z = wrench_mean[2];
-        filtered_wrench.wrench.torque.x = wrench_mean[3];
-        filtered_wrench.wrench.torque.y = wrench_mean[4];
-        filtered_wrench.wrench.torque.z = wrench_mean[5];
-
-        filtered_wrench.header = to_filter_wrench.header;
-        wrench_mean.setZero();
-        
-        data_out.clear();
-        data_out.push_back(filtered_wrench.wrench.force.x);
-        data_out.push_back(filtered_wrench.wrench.force.y);
-        data_out.push_back(filtered_wrench.wrench.force.z);
-        data_out.push_back(filtered_wrench.wrench.torque.x);
-        data_out.push_back(filtered_wrench.wrench.torque.y);
-        data_out.push_back(filtered_wrench.wrench.torque.z);          
-   }
-   
-
+  for (int i = 0; i<data_in.size();i++)
+  {
+    data_out[i] = b1 * old_value[i] + a1 * filtered_old_value[i];
+    filtered_old_value[i] = data_out[i];
+  }
+  old_value = data_in;
   return true;
+    
 };
 
 }

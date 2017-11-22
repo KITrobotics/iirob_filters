@@ -11,4 +11,4 @@ my_group.add("divider", paramtype="int", description="divider", default=1, confi
 #gen.add("LowPassFilter", paramtype="std::map<std::string,std::string>", description="A map parameter")
 
 #Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
-exit(gen.generate("iirob_filters", "iirob_filters_low_pass_filter", "LowPassFilter"))
+exit(gen.generate("iirob_filters", "iirob_filters", "LowPassFilter"))

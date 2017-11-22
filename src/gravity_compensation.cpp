@@ -42,5 +42,4 @@
 #include <iirob_filters/gravity_compensation.h>
 
 PLUGINLIB_EXPORT_CLASS(iirob_filters::GravityCompensator<geometry_msgs::WrenchStamped>, filters::FilterBase<geometry_msgs::WrenchStamped>)
-PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelGravityCompensator<double>, filters::MultiChannelFilterBase<double>)
 
