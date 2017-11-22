@@ -7,6 +7,7 @@
       2) Moving Mean
       3) Gravity Compensation (used for force-torque sensors)
       4) Threshold Filter
+      5) Kalman Filter
       </description>
 
   <maintainer email="denis.stogl@kit.edu">Denis Štogl</maintainer>

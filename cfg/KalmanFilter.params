@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+from rosparam_handler.parameter_generator_catkin import *
+gen = ParameterGenerator()
+
+# Add a Kalman Filter group
+my_group = gen.add_group("KalmanFilter")
+my_group.add("dt", paramtype="double", description="time between two updates", default=0, configurable=True)
+my_group.add("n", paramtype="int", description="number of states", default=0, configurable=True)
+my_group.add("m", paramtype="int", description="number of measurements", default=0, configurable=True)
+my_group.add("A", paramtype="std::vector<double>", description="System dynamics matrix: nxn", default=[], configurable=False)
+my_group.add("C", paramtype="std::vector<double>", description="Output matrix: mxn", default=[], configurable=False)
+my_group.add("Q", paramtype="std::vector<double>", description="Process noise covariance: nxn", default=[], configurable=False)
+my_group.add("R", paramtype="std::vector<double>", description="Measurement noise covariance: mxm", default=[], configurable=False)
+my_group.add("P", paramtype="std::vector<double>", description="Estimate error covariance: nxn", default=[], configurable=False)
+my_group.add("x0", paramtype="std::vector<double>", description="start state vector", default=[], configurable=False)
+
+#Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
+exit(gen.generate("iirob_filters", "iirob_filters_kalman_filter", "KalmanFilter"))
+
