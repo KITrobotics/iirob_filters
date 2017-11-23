@@ -46,10 +46,11 @@
 #include <iirob_filters/MovingMeanParameters.h>
 #include <filters/filter_base.h>
 #include <math.h>
+#include <iirob_filters/iirob_filter_base.h>
 namespace iirob_filters{
     
 template <typename T>
-class MovingMeanFilter: public filters::FilterBase<T>
+class MovingMeanFilter: public iirob_filters::iirobFilterBase<T>
 {
 public:
 
@@ -57,6 +58,7 @@ public:
         ~MovingMeanFilter();
 
         virtual bool configure();
+        virtual bool configure(std::string ns);
         virtual bool update(const T & data_in, T& data_out);
 
 private:
@@ -64,16 +66,17 @@ private:
         ros::NodeHandle nh_;
         
         // Parameters
-        iirob_filters::MovingMeanParameters params_;
+        //iirob_filters::MovingMeanParameters params_;
         int divider_;
 
         // Filter parametrs
         int divider_counter;
+        std::string ns_;
         std::vector<T> values;
 };
     
 template <typename T>
-MovingMeanFilter<T>::MovingMeanFilter():params_{nh_.getNamespace()+"/MovingMeanFilter/params"}
+MovingMeanFilter<T>::MovingMeanFilter()
 {
 }
 
@@ -83,8 +86,21 @@ MovingMeanFilter<T>::~MovingMeanFilter()
 }
 
 template <typename T>
+bool MovingMeanFilter<T>::configure(std::string ns)
+{
+    ns_ = ns;    
+    iirob_filters::MovingMeanParameters params_{ns_+"/params"};
+    params_.fromParamServer();
+    divider_ = params_.divider;    
+    if(divider_ == 0)
+        ROS_ERROR("MovingMeanFilter did not find param divider");
+    return true;
+}
+
+template <typename T>
 bool MovingMeanFilter<T>::configure()
 {
+    iirob_filters::MovingMeanParameters params_{nh_.getNamespace()+"/MovingMeanFilter/params"};
     params_.fromParamServer();
     divider_ = params_.divider;
     if(divider_ == 0)

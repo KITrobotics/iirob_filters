@@ -48,21 +48,24 @@
 #include <iirob_filters/ThresholdConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <filters/filter_base.h>
+#include <iirob_filters/iirob_filter_base.h>
 
 namespace iirob_filters{
 template <typename T>
-class ThresholdFilter: public filters::FilterBase<T>
+class ThresholdFilter: public iirob_filters::iirobFilterBase<T>
 {
 public:
         ThresholdFilter();
         
         ~ThresholdFilter();
         virtual bool configure();
+        virtual bool configure(std::string ns);
         virtual bool update(const T & data_in, T& data_out);
     
     private:
         ros::NodeHandle nh_;
-        iirob_filters::ThresholdParameters params_;
+        std::string ns_;
+        //iirob_filters::ThresholdParameters params_;
         double threshold_;
         double threshold_lin_;
         double threshold_angular_;
@@ -74,7 +77,7 @@ public:
 };
 
 template <typename T>
-ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
+ThresholdFilter<T>::ThresholdFilter()
 {
     reconfigCalibrationSrv_.setCallback(boost::bind(&ThresholdFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
@@ -85,8 +88,26 @@ ThresholdFilter<T>::~ThresholdFilter()
 }
 
 template <typename T>
+bool ThresholdFilter<T>::configure(std::string ns)
+{
+    ns_ = ns;
+    iirob_filters::ThresholdParameters params_{ns_+"/params"};
+    params_.fromParamServer();
+    threshold_ = params_.threshold;
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+    if(threshold_lin_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param linear_threshold");
+    if(threshold_angular_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");    
+    
+    return true;
+}
+
+template <typename T>
 bool ThresholdFilter<T>::configure()
 {
+    iirob_filters::ThresholdParameters params_{nh_.getNamespace()+"/ThresholdFilter/params"};
     params_.fromParamServer();
     threshold_ = params_.threshold;
     threshold_lin_ = params_.linear_threshold;
@@ -95,7 +116,6 @@ bool ThresholdFilter<T>::configure()
 	  ROS_ERROR("ThresholdFilter did not find param linear_threshold");
     if(threshold_angular_ == 0)
 	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");
-    
     
     return true;
 }
@@ -153,6 +173,7 @@ inline bool ThresholdFilter<geometry_msgs::WrenchStamped>::update(const geometry
 template <typename T>
 void ThresholdFilter<T>::reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level)
 {
+    iirob_filters::ThresholdParameters params_{ns_+"/params"};
     //params_.fromConfig(config);
     threshold_ = params_.threshold;
     threshold_lin_ = params_.linear_threshold;
