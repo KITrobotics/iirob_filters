@@ -54,17 +54,19 @@
 
 namespace iirob_filters{
 template <typename T>
-class LowPassFilter: public iirob_filters::iirobFilterBase<T>
+class LowPassFilter: public IIrobFilterBase<T>
 {
 public:
         LowPassFilter();
 
         ~LowPassFilter();
         virtual bool configure();
-        virtual bool configure(std::string ns);
-        virtual bool update(const T& data_in, T& data_out);
+        virtual bool update(const T& data_in, T& data_out);      
         
-private:
+protected:        
+        dynamic_reconfigure::Server<iirob_filters::LowPassFilterConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
+
+        void reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level);
 
         ros::NodeHandle nh_;
 
@@ -72,30 +74,24 @@ private:
         double sampling_frequency_;
         double damping_frequency_;
         double damping_intensity_;
-        int divider_;
-        std::map<std::string,std::string> map_param_;
-
+        int divider_;        
 
         // Filter parametrs
         double b1;
         double a1;
         int divider_counter;
         double filtered_value, filtered_old_value, old_value;
-        std::string ns_;
 
         Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old;
-          
-        dynamic_reconfigure::Server<iirob_filters::LowPassFilterConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
-
-        void reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level);
-  
+        using IIrobFilterBase<T>::ns_;    
+        
 };
 
 
 template <typename T>
 LowPassFilter<T>::LowPassFilter()
 {
-    reconfigCalibrationSrv_.setCallback(boost::bind(&LowPassFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
+    //reconfigCalibrationSrv_.setCallback(boost::bind(&LowPassFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
 
 template <typename T>
@@ -103,48 +99,17 @@ LowPassFilter<T>::~LowPassFilter()
 {
 }
 template <typename T>
-bool LowPassFilter<T>::configure(std::string ns)
-{
-    ns_ = ns;    
+bool LowPassFilter<T>::configure()
+{    
+    if(ns_=="")
+        ns_=nh_.getNamespace()+"/LowPassFilter";
+    std::cout<<"conf() lp"<<ns_<<std::endl;
     iirob_filters::LowPassFilterParameters params_{ns_+"/params"};
     params_.fromParamServer();
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
-
-    
-    divider_ = params_.divider;    
-    if(sampling_frequency_ == 0)
-        ROS_ERROR("LowPassFilter did not find param SamplingFrequency");
-    if(damping_frequency_ == 0)
-        ROS_ERROR("LowPassFilter did not find param DampingFrequency");
-    if(damping_intensity_ == 0)
-        ROS_ERROR("LowPassFilter did not find param DampingIntensity");
-    if(divider_ == 0)
-        ROS_ERROR("Divider value not correct - cannot be 0. Check .param or .yaml files");
-    
-    a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
-    b1 = 1 - a1;
-    
-    divider_counter = 1;
-    // Initialize storage Vectors
-    filtered_value = filtered_old_value = old_value = 0;
-    for (int ii=0; ii<6; ii++)
-    {
-        msg_filtered(ii) = msg_filtered_old(ii) = msg_old(ii) = 0;
-    }
-    return true;
-}
-
-template <typename T>
-bool LowPassFilter<T>::configure()
-{    
-    iirob_filters::LowPassFilterParameters params_{nh_.getNamespace()+"/LowPassFilter/params"};
-    params_.fromParamServer();
-    sampling_frequency_ = params_.SamplingFrequency;
-    damping_frequency_ = params_.DampingFrequency;
-    damping_intensity_ = params_.DampingIntensity;
-    divider_ = params_.divider;    
+    divider_ = params_.divider;        
     if(sampling_frequency_ == 0)
         ROS_ERROR("LowPassFilter did not find param SamplingFrequency");
     if(damping_frequency_ == 0)
