@@ -87,11 +87,11 @@ MovingMeanFilter<T>::~MovingMeanFilter()
 template <typename T>
 bool MovingMeanFilter<T>::configure()
 {
-    
+    //TODO   
     if(ns_=="")
         ns_=nh_.getNamespace()+"/MovingMeanFilter";
     std::cout<<"conf() mm"<<ns_<<std::endl;
-    iirob_filters::MovingMeanParameters params_{ns_+"/params"};
+    MovingMeanParameters params_{ns_+"/params"};
     params_.fromParamServer();
     divider_ = params_.divider;
     if(divider_ == 0)

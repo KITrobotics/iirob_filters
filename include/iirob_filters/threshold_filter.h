@@ -62,12 +62,11 @@ public:
         virtual bool update(const T & data_in, T& data_out);
 
 protected:        
-        dynamic_reconfigure::Server<iirob_filters::ThresholdConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
+        dynamic_reconfigure::Server<ThresholdConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
-        void reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level);
+        void reconfigureConfigurationRequest(ThresholdConfig& config, uint32_t level);
 
         ros::NodeHandle nh_;        
-        //iirob_filters::ThresholdParameters params_;
         double threshold_;
         double threshold_lin_;
         double threshold_angular_;
@@ -77,7 +76,7 @@ protected:
 template <typename T>
 ThresholdFilter<T>::ThresholdFilter()
 {
-    //reconfigCalibrationSrv_.setCallback(boost::bind(&ThresholdFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
+    reconfigCalibrationSrv_.setCallback(boost::bind(&ThresholdFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
 
 template <typename T>
@@ -88,11 +87,11 @@ ThresholdFilter<T>::~ThresholdFilter()
 template <typename T>
 bool ThresholdFilter<T>::configure()
 {
-    
+    //TODO
     if(ns_=="")
         ns_=nh_.getNamespace()+"/ThresholdFilter";
     std::cout<<"conf() tf"<<ns_<<std::endl;
-    iirob_filters::ThresholdParameters params_{ns_+"/params"};
+    ThresholdParameters params_{ns_+"/params"};
     params_.fromParamServer();
     threshold_ = params_.threshold;
     threshold_lin_ = params_.linear_threshold;
@@ -156,10 +155,9 @@ inline bool ThresholdFilter<geometry_msgs::WrenchStamped>::update(const geometry
 }
 
 template <typename T>
-void ThresholdFilter<T>::reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level)
-{
-    std::cout<<"here"<<std::endl;
-    iirob_filters::ThresholdParameters params_{ns_+"/params"};
+void ThresholdFilter<T>::reconfigureConfigurationRequest(ThresholdConfig& config, uint32_t level)
+{    
+    ThresholdParameters params_{ns_+"/params"};
     //params_.fromConfig(config);
     threshold_ = params_.threshold;
     threshold_lin_ = params_.linear_threshold;
@@ -181,7 +179,7 @@ private:
     //ROS Objects
     ros::NodeHandle nh_;
 
-    iirob_filters::ThresholdParameters params_;
+    ThresholdParameters params_;
     double threshold_;
     double threshold_lin_;
     double threshold_angular_;

@@ -19,6 +19,7 @@ public:
   IIrobFilterBase(): ns_("")
   {
     data_type_ = "geometry_msgs::WrenchStamped";
+    //TODO
     //std::cout<<"id: "<<typeid(T).name()<<std::endl;
   };
   

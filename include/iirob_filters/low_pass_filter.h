@@ -64,9 +64,9 @@ public:
         virtual bool update(const T& data_in, T& data_out);      
         
 protected:        
-        dynamic_reconfigure::Server<iirob_filters::LowPassFilterConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
+        dynamic_reconfigure::Server<LowPassFilterConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
-        void reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level);
+        void reconfigureConfigurationRequest(LowPassFilterConfig& config, uint32_t level);
 
         ros::NodeHandle nh_;
 
@@ -91,7 +91,7 @@ protected:
 template <typename T>
 LowPassFilter<T>::LowPassFilter()
 {
-    //reconfigCalibrationSrv_.setCallback(boost::bind(&LowPassFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
+    reconfigCalibrationSrv_.setCallback(boost::bind(&LowPassFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
 
 template <typename T>
@@ -101,10 +101,11 @@ LowPassFilter<T>::~LowPassFilter()
 template <typename T>
 bool LowPassFilter<T>::configure()
 {    
+    //TODO
     if(ns_=="")
         ns_=nh_.getNamespace()+"/LowPassFilter";
     std::cout<<"conf() lp"<<ns_<<std::endl;
-    iirob_filters::LowPassFilterParameters params_{ns_+"/params"};
+    LowPassFilterParameters params_{ns_+"/params"};
     params_.fromParamServer();
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;
@@ -167,9 +168,9 @@ bool LowPassFilter<T>::update(const T& data_in, T& data_out)
 }
 
 template <typename T>
-void LowPassFilter<T>::reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level)
+void LowPassFilter<T>::reconfigureConfigurationRequest(LowPassFilterConfig& config, uint32_t level)
 {
-    iirob_filters::LowPassFilterParameters params_{ns_+"/params"};
+    LowPassFilterParameters params_{ns_+"/params"};
     //params_.fromConfig(config);
     sampling_frequency_ = params_.SamplingFrequency;
     damping_intensity_ = params_.DampingFrequency;
@@ -212,7 +213,7 @@ protected:
   double b1;
   double a1;
   
-  iirob_filters::LowPassFilterParameters params_;  
+  LowPassFilterParameters params_;  
   std::vector<T> filtered_value, filtered_old_value, old_value;
   
   using filters::MultiChannelFilterBase<T>::number_of_channels_;           

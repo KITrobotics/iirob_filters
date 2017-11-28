@@ -73,13 +73,12 @@ public:
     virtual bool update( const T & data_in, T& data_out);
     
 protected:                      
-    dynamic_reconfigure::Server<iirob_filters::GravityCompensationConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
+    dynamic_reconfigure::Server<GravityCompensationConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
-    void reconfigureConfigurationRequest(iirob_filters::GravityCompensationConfig& config, uint32_t level);
+    void reconfigureConfigurationRequest(GravityCompensationConfig& config, uint32_t level);
     
     ros::NodeHandle nh_;
     
-    //iirob_filters::GravityCompensationParameters params_;
 
     // Storage for Calibration Values
     geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
@@ -100,7 +99,7 @@ protected:
 template <typename T>
 GravityCompensator<T>::GravityCompensator()
 {
-    //reconfigCalibrationSrv_.setCallback(boost::bind(&GravityCompensator<T>::reconfigureConfigurationRequest, this, _1, _2));
+    reconfigCalibrationSrv_.setCallback(boost::bind(&GravityCompensator<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
 
 template <typename T>
@@ -111,10 +110,11 @@ GravityCompensator<T>::~GravityCompensator()
 template <typename T>
 bool GravityCompensator<T>::configure()
 {
+    //TODO
     if(ns_=="")
         ns_=nh_.getNamespace()+"/GravityCompensation";
     std::cout<<"conf() gc"<<ns_<<std::endl;
-    iirob_filters::GravityCompensationParameters params_{ns_+"/params"};
+    GravityCompensationParameters params_{ns_+"/params"};
     params_.fromParamServer();
     if(params_.world_frame == "")
       ROS_ERROR("GravityCompensator did not find param world_frame");
@@ -190,9 +190,9 @@ bool GravityCompensator<T>::update(const T & data_in, T& data_out)
 }
 
 template <typename T>
-void GravityCompensator<T>::reconfigureConfigurationRequest(iirob_filters::GravityCompensationConfig& config, uint32_t level)
+void GravityCompensator<T>::reconfigureConfigurationRequest(GravityCompensationConfig& config, uint32_t level)
 {
-    iirob_filters::GravityCompensationParameters params_{ns_+"/params"};
+    GravityCompensationParameters params_{ns_+"/params"};
     //params_.fromConfig(config);
     world_frame_ = params_.world_frame;      
     sensor_frame_ = params_.sensor_frame;
