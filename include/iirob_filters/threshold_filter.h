@@ -47,7 +47,6 @@
 #include <iirob_filters/ThresholdParameters.h>
 #include <iirob_filters/ThresholdConfig.h>
 #include <dynamic_reconfigure/server.h>
-#include <filters/filter_base.h>
 #include <iirob_filters/iirob_filter_base.h>
 
 namespace iirob_filters{
@@ -70,6 +69,7 @@ protected:
         double threshold_;
         double threshold_lin_;
         double threshold_angular_;
+        
         using IIrobFilterBase<T>::ns_;             
 };
 
@@ -87,10 +87,10 @@ ThresholdFilter<T>::~ThresholdFilter()
 template <typename T>
 bool ThresholdFilter<T>::configure()
 {
-    //TODO
-    if(ns_=="")
+    if(ns_==""){
+        ROS_ERROR("Invalid namespace in ThresholdFilter");
         ns_=nh_.getNamespace()+"/ThresholdFilter";
-    std::cout<<"conf() tf"<<ns_<<std::endl;
+    }    
     ThresholdParameters params_{ns_+"/params"};
     params_.fromParamServer();
     threshold_ = params_.threshold;
@@ -158,7 +158,7 @@ template <typename T>
 void ThresholdFilter<T>::reconfigureConfigurationRequest(ThresholdConfig& config, uint32_t level)
 {    
     ThresholdParameters params_{ns_+"/params"};
-    //params_.fromConfig(config);
+    //if(ns_!="") params_.fromConfig(config);
     threshold_ = params_.threshold;
     threshold_lin_ = params_.linear_threshold;
     threshold_angular_ = params_.angular_threshold;

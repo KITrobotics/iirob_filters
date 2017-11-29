@@ -44,9 +44,9 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <iirob_filters/MovingMeanParameters.h>
-#include <filters/filter_base.h>
 #include <math.h>
 #include <iirob_filters/iirob_filter_base.h>
+
 namespace iirob_filters{
     
 template <typename T>
@@ -58,20 +58,19 @@ public:
         MovingMeanFilter();
         ~MovingMeanFilter();
 
-        virtual bool configure();
+        virtual bool configure();         
         virtual bool update(const T & data_in, T& data_out);
 
 protected:
         ros::NodeHandle nh_;
         
-        // Parameters
-        //iirob_filters::MovingMeanParameters params_;
+        // Parameters        
         int divider_;
 
         // Filter parametrs
         int divider_counter;
-        std::vector<T> values;
-        using IIrobFilterBase<T>::ns_;       
+        std::vector<T> values;        
+        using IIrobFilterBase<T>::ns_;
 };
     
 template <typename T>
@@ -83,14 +82,14 @@ template <typename T>
 MovingMeanFilter<T>::~MovingMeanFilter()
 {
 }
-
 template <typename T>
 bool MovingMeanFilter<T>::configure()
-{
-    //TODO   
+{    
     if(ns_=="")
+    {
+        ROS_ERROR("Invalid namespace in LowPassFilter");
         ns_=nh_.getNamespace()+"/MovingMeanFilter";
-    std::cout<<"conf() mm"<<ns_<<std::endl;
+    }    
     MovingMeanParameters params_{ns_+"/params"};
     params_.fromParamServer();
     divider_ = params_.divider;

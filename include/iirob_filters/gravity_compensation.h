@@ -55,7 +55,6 @@
 #include <iirob_filters/GravityCompensationParameters.h>
 #include <iirob_filters/GravityCompensationConfig.h>
 #include <dynamic_reconfigure/server.h>
-#include <filters/filter_base.h>
 #include <iirob_filters/iirob_filter_base.h>
 
 namespace iirob_filters
@@ -68,18 +67,18 @@ public:
     
     ~GravityCompensator();
     
-    virtual bool configure();    
+    virtual bool configure();          
     
     virtual bool update( const T & data_in, T& data_out);
     
-protected:                      
+private:
     dynamic_reconfigure::Server<GravityCompensationConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
     void reconfigureConfigurationRequest(GravityCompensationConfig& config, uint32_t level);
     
     ros::NodeHandle nh_;
     
-
+protected:  
     // Storage for Calibration Values
     geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
     double force_z_; // Gravitational Force
@@ -93,6 +92,7 @@ protected:
     tf2_ros::TransformListener *p_tf_Listener;
     geometry_msgs::TransformStamped transform_, transform_back_;      
     uint _num_transform_errors;
+    
     using IIrobFilterBase<T>::ns_;  
 };
 
@@ -106,14 +106,14 @@ template <typename T>
 GravityCompensator<T>::~GravityCompensator()
 {
 }
-
 template <typename T>
 bool GravityCompensator<T>::configure()
 {
-    //TODO
     if(ns_=="")
+    {
+        ROS_ERROR("Invalid namespace in GravityCompensation");
         ns_=nh_.getNamespace()+"/GravityCompensation";
-    std::cout<<"conf() gc"<<ns_<<std::endl;
+    }
     GravityCompensationParameters params_{ns_+"/params"};
     params_.fromParamServer();
     if(params_.world_frame == "")
@@ -171,14 +171,13 @@ bool GravityCompensator<T>::update(const T & data_in, T& data_out)
   geometry_msgs::Vector3Stamped cog_transformed;
   tf2::doTransform(cog_, cog_transformed, transform_);
   
-    // Compensate for gravity force
+  // Compensate for gravity force
   temp_force_transformed.vector.z  += force_z_;
   // Compensation Values for torque result from Crossprod of cog Vector and (0 0 G)
   temp_torque_transformed.vector.x += (force_z_ * cog_transformed.vector.y);
   temp_torque_transformed.vector.y -= (force_z_ * cog_transformed.vector.x);
 
-  // Copy Message and Compensate values for Gravity Force and Resulting Torque
-  //geometry_msgs::WrenchStamped compensated_wrench;
+  // Copy Message and Compensate values for Gravity Force and Resulting Torque  
   data_out = data_in;
   
   tf2::doTransform(temp_force_transformed, temp_vector_out, transform_back_);
@@ -191,9 +190,9 @@ bool GravityCompensator<T>::update(const T & data_in, T& data_out)
 
 template <typename T>
 void GravityCompensator<T>::reconfigureConfigurationRequest(GravityCompensationConfig& config, uint32_t level)
-{
+{    
     GravityCompensationParameters params_{ns_+"/params"};
-    //params_.fromConfig(config);
+    //if(ns_!="") params_.fromConfig(config);
     world_frame_ = params_.world_frame;      
     sensor_frame_ = params_.sensor_frame;
     cog_.vector.x = params_.CoG_x;

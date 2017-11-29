@@ -47,7 +47,6 @@
 #include <iirob_filters/LowPassFilterParameters.h>
 #include <iirob_filters/LowPassFilterConfig.h>
 #include <dynamic_reconfigure/server.h>
-#include <filters/filter_base.h>
 #include <iirob_filters/iirob_filter_base.h>
 
 #include <math.h>
@@ -60,7 +59,7 @@ public:
         LowPassFilter();
 
         ~LowPassFilter();
-        virtual bool configure();
+        virtual bool configure();          
         virtual bool update(const T& data_in, T& data_out);      
         
 protected:        
@@ -74,7 +73,7 @@ protected:
         double sampling_frequency_;
         double damping_frequency_;
         double damping_intensity_;
-        int divider_;        
+        int divider_;                
 
         // Filter parametrs
         double b1;
@@ -101,10 +100,11 @@ LowPassFilter<T>::~LowPassFilter()
 template <typename T>
 bool LowPassFilter<T>::configure()
 {    
-    //TODO
     if(ns_=="")
+    {
+        ROS_ERROR("Invalid namespace in LowPassFilter");
         ns_=nh_.getNamespace()+"/LowPassFilter";
-    std::cout<<"conf() lp"<<ns_<<std::endl;
+    }    
     LowPassFilterParameters params_{ns_+"/params"};
     params_.fromParamServer();
     sampling_frequency_ = params_.SamplingFrequency;
@@ -169,9 +169,9 @@ bool LowPassFilter<T>::update(const T& data_in, T& data_out)
 
 template <typename T>
 void LowPassFilter<T>::reconfigureConfigurationRequest(LowPassFilterConfig& config, uint32_t level)
-{
+{    
     LowPassFilterParameters params_{ns_+"/params"};
-    //params_.fromConfig(config);
+    //if(ns_!="") params_.fromConfig(config);
     sampling_frequency_ = params_.SamplingFrequency;
     damping_intensity_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
