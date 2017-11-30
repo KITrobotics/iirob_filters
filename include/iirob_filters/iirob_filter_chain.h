@@ -15,26 +15,35 @@
 #include <cxxabi.h>
 
 namespace iirob_filters{
-template <typename T>
+template <typename T1, typename T2>
 class IIrobFilterChain
 {
 private:
-     pluginlib::ClassLoader<filters::FilterBase<T> >* loader_;
+     pluginlib::ClassLoader<filters::FilterBase<T1> >* loader_;
 protected:
     ///<! A vector of pointers to currently constructed filters
-    std::vector<boost::shared_ptr<IIrobFilterBase<T>> > reference_pointers_iirob_;
-    std::vector<boost::shared_ptr<filters::FilterBase<T>> > reference_pointers_;
+    boost::shared_ptr<T2> reference_pointers_;
 public:
   IIrobFilterChain()
   {
     int status;
-    std::string type_name = abi::__cxa_demangle(typeid(T).name(), 0, 0, &status);
+    std::string type_name = abi::__cxa_demangle(typeid(T1).name(), 0, 0, &status);
     int position = type_name.find('_<');    
     data_type_=type_name.substr(0,position-1); 
-    loader_ = new pluginlib::ClassLoader<filters::FilterBase<T>>("filters", std::string("filters::FilterBase<") + data_type_ + std::string(">")); 
+    loader_ = new pluginlib::ClassLoader<filters::FilterBase<T1>>("filters", std::string("filters::FilterBase<") + data_type_ + std::string(">")); 
   }
   bool configure(std::string param_name, ros::NodeHandle node = ros::NodeHandle())
   {
+    bool useHandler;
+    node.getParam("notUsingParamHandler",useHandler);  
+    if(node.hasParam("notUsingParamHandler") && useHandler)
+    {
+          ROS_INFO("Atention: Not using rosparam_handler!");
+          filters::FilterChain<T1> chain(data_type_); 
+          return chain.configure(param_name,node);
+    }
+    else
+    {
     XmlRpc::XmlRpcValue config;
     if (!node.getParam(param_name, config))
     {
@@ -42,6 +51,7 @@ public:
         return false;
     }
     return this->configure(config, node.getNamespace()+"/"+param_name);
+    }
   }
   
   bool configure(XmlRpc::XmlRpcValue& config, const std::string& filter_ns)
@@ -75,45 +85,33 @@ public:
       std::string lib_name = type.substr(0,position);	  
       
       bool result = true; 
-      boost::shared_ptr<filters::FilterBase<T> > p(loader_->createInstance(std::string(config["type"])));
+      boost::shared_ptr<filters::FilterBase<T1> > p(loader_->createInstance(std::string(config["type"])));
       if (p.get() == NULL){
        std::cout<<"Null"<<std::endl;
        return false;
       }
-
-      if(lib_name=="iirob_filters")
-      {
-        lib_name_ =lib_name;
-        reference_pointers_iirob_.push_back(boost::static_pointer_cast<IIrobFilterBase<T>>(p));      
-        result = reference_pointers_iirob_[0]->configure(config,ns_); 
-      }
-      else
-      { 
-        lib_name_ =lib_name;
-        reference_pointers_.push_back(p);        
-        result = reference_pointers_[0]->configure(config); 
-      }
-                         
-      //std::string type = config["type"];
+      reference_pointers_=boost::static_pointer_cast<T2>(p);  
+      int status;
+      std::string t2_type_name = abi::__cxa_demangle(typeid(T2).name(), 0, 0, &status);
+      int t2_position = t2_type_name.find('_<');        
+      std::string t2_data_type=t2_type_name.substr(0,t2_position); 
+      if(t2_data_type=="iirob_filters::IIrobFilterBase")
+          result = reference_pointers_->configure(config,ns_); 
+      else 
+          result = reference_pointers_->configure(config); 
       std::string name = config["name"];
       ROS_DEBUG("%s: Configured %s:%s filter at %p\n", ns_.c_str(), type.c_str(),
                 name.c_str(),  p.get());
       return result;
   }    
-  bool update(const T& data_in, T& data_out)
+  bool update(const T1& data_in, T1& data_out)
   {
-      if(lib_name_=="iirob_filters")
-        return reference_pointers_iirob_[0]->update(data_in,data_out);      
-      else
-        return reference_pointers_[0]->update(data_in,data_out);      
+        return reference_pointers_->update(data_in,data_out);      
   }
   
-  bool update(const std::vector<T>& data_in, std::vector<T>& data_out)
+  bool update(const std::vector<T1>& data_in, std::vector<T1>& data_out)
   {
-     if(lib_name_=="iirob_filters")
-        return reference_pointers_iirob_[0]->update(data_in,data_out);      
-     else
-        return reference_pointers_[0]->update(data_in,data_out);        
+        return reference_pointers_->update(data_in,data_out);        
   }
   bool configure()
   {
