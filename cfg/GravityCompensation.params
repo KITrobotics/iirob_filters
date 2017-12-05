@@ -12,4 +12,4 @@ my_group.add("CoG_z", paramtype="double", description="value", default=0, config
 my_group.add("force", paramtype="double", description="value", default=0.0, configurable=True)
 
 #Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
-exit(gen.generate("iirob_filters", "iirob_filters_gravity_compensation", "GravityCompensation"))
+exit(gen.generate("iirob_filters", "iirob_filters", "GravityCompensation"))

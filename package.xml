@@ -19,7 +19,7 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>rosparam_handler</build_depend>
+  <depend>rosparam_handler</depend>
   <depend>cmake_modules</depend>
   <depend>eigen_conversions</depend>
   <depend>geometry_msgs</depend>
