@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosparam_handler
   tf2_ros
+  filters
 )
 
 find_package(Eigen3)
@@ -30,17 +31,17 @@ endif()
 
 generate_ros_parameter_files(
     cfg/Threshold.params
-    cfg/MovingMean.params
     cfg/LowPassFilter.params
     cfg/GravityCompensation.params
+    cfg/MovingMean.params
 )
 
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS eigen_conversions geometry_msgs roscpp
+  CATKIN_DEPENDS eigen_conversions geometry_msgs roscpp filters
   DEPENDS Eigen
-  LIBRARIES ${PROJECT_NAME}_gravity_compensation ${PROJECT_NAME}_low_pass_filter ${PROJECT_NAME}_moving_mean_filter ${PROJECT_NAME}_threshold_filter
+  LIBRARIES ${PROJECT_NAME}
 )
 
 ###########
@@ -53,49 +54,31 @@ include_directories(
   ${Eigen_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME}_gravity_compensation
+add_library(${PROJECT_NAME}
   src/gravity_compensation.cpp
-)
-add_dependencies(${PROJECT_NAME}_gravity_compensation
-  ${PROJECT_NAME}_gravity_compensation_gencfg  # For dynamic_reconfigure
-  ${PROJECT_NAME}_gravity_compensation_genparam # For rosparam_handler
-  )
-
-add_library(${PROJECT_NAME}_low_pass_filter
-  src/low_pass_filter.cpp
-)
-add_dependencies(${PROJECT_NAME}_low_pass_filter
-  ${PROJECT_NAME}_low_pass_filter_gencfg  # For dynamic_reconfigure
-  ${PROJECT_NAME}_low_pass_filter_genparam  # For rosparam_handler
-  )
-
-add_library(${PROJECT_NAME}_moving_mean_filter
-  src/moving_mean_filter.cpp
-)
-add_dependencies(${PROJECT_NAME}_moving_mean_filter
-  ${PROJECT_NAME}_moving_mean_filter_gencfg # For dynamic_reconfigure
-  ${PROJECT_NAME}_moving_mean_filter_genparam # For rosparam_handler
-  )
-
-add_library(${PROJECT_NAME}_threshold_filter
+  src/low_pass_filter.cpp  
   src/threshold_filter.cpp
+  src/moving_mean_filter.cpp
+  
+   include/${PROJECT_NAME}/low_pass_filter.h
+   include/${PROJECT_NAME}/gravity_compensation.h
+   include/${PROJECT_NAME}/threshold_filter.h
+   include/${PROJECT_NAME}/moving_mean_filter.h
 )
-add_dependencies(${PROJECT_NAME}_threshold_filter
-  ${PROJECT_NAME}_threshold_filter_gencfg  # For dynamic_reconfigure
-  ${PROJECT_NAME}_threshold_filter_genparam  # For rosparam_handle
+
+add_dependencies(${PROJECT_NAME}
+  ${PROJECT_NAME}_gencfg  # For dynamic_reconfigure
+  ${PROJECT_NAME}_genparam  # For rosparam_handler
   )
 
-target_link_libraries(${PROJECT_NAME}_gravity_compensation ${catkin_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}_low_pass_filter ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}_moving_mean_filter ${catkin_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}_threshold_filter ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_gravity_compensation ${PROJECT_NAME}_low_pass_filter ${PROJECT_NAME}_moving_mean_filter ${PROJECT_NAME}_threshold_filter
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -106,6 +89,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
+)
+install(FILES filters_plugin.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############

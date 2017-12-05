@@ -5,10 +5,11 @@
  * Intelligent Process Control and Robotics (IPR),
  * Karlsruhe Institute of Technology (KIT)
  *
- * Author: Alexandar Pollmann
+ * Author: Andreea Tulbure, email: andreea.tulbure@student.kit.edu
  *         Denis Štogl, email: denis.stogl@kit.edu
+ *         Alexandar Pollmann
  *
- * Date of creation: 2015-2016
+ * Date of creation: 2015-2017
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -41,49 +42,166 @@
 
 #ifndef IIROB_FILTERS_GRAVITY_COMPENSATION_H
 #define IIROB_FILTERS_GRAVITY_COMPENSATION_H
+#include <stdint.h>
+#include <cstring>
+#include <stdio.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <iirob_filters/GravityCompensationParameters.h>
+#include <iirob_filters/GravityCompensationConfig.h>
+#include <dynamic_reconfigure/server.h>
+#include <filters/filter_base.h>
 
-class GravityCompensator
+namespace iirob_filters{
+
+template <typename T>
+class GravityCompensator: public filters::FilterBase<T>
 {
+public:
+    GravityCompensator();
+      
+    /** \brief Destructor to clean up
+    */
+    ~GravityCompensator();
+    
+    virtual bool configure();
+    
+    /** \brief Update the filter and return the data seperately
+    * \param data_in T array with length width
+    * \param data_out T array with length width
+    */
+    virtual bool update( const T & data_in, T& data_out);
 
 private:
+    ros::NodeHandle nh_;
+    iirob_filters::GravityCompensationParameters params_;
 
-  //ROS Objects
-  ros::NodeHandle nh_;
-  iirob_filters::GravityCompensationParameters params_;
+    // Storage for Calibration Values
+    geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
+    double force_z_; // Gravitational Force
 
-  // Storage for Calibration Values
-  geometry_msgs::Vector3Stamped cog_; // Center of Gravity Vector (wrt Sensor Frame)
-  double force_z_; // Gravitational Force
+    // Frames for Transformation of Gravity / CoG Vector
+    std::string world_frame_;
+    std::string sensor_frame_;
 
-  // Frames for Transformation of Gravity / CoG Vector
-  std::string world_frame_;
-
-  // tf2 objects
-  tf2_ros::Buffer *p_tf_Buffer_;
-  tf2_ros::TransformListener *p_tf_Listener;
-  geometry_msgs::TransformStamped transform_, transform_back_;
+    // tf2 objects
+    tf2_ros::Buffer *p_tf_Buffer_;
+    tf2_ros::TransformListener *p_tf_Listener;
+    geometry_msgs::TransformStamped transform_, transform_back_;
   
-  uint _num_transform_errors;
+    uint _num_transform_errors;
+    
+                      
+    dynamic_reconfigure::Server<iirob_filters::GravityCompensationConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
-  bool init();
-
-public:
-
-  GravityCompensator(ros::NodeHandle& nh);
-  GravityCompensator();
-  bool init(const ros::NodeHandle &nh);
-
-  GravityCompensator(std::string world_frame, double cog_x, double cog_y, double cog_z, double force_z);
-
-  geometry_msgs::WrenchStamped compensate(const geometry_msgs::WrenchStamped &to_compensate_wrench);
-
+    void reconfigureConfigurationRequest(iirob_filters::GravityCompensationConfig& config, uint32_t level);
 };
 
+template <typename T>
+GravityCompensator<T>::GravityCompensator(): params_{nh_.getNamespace()+"/GravityCompensation/params"}
+{
+    reconfigCalibrationSrv_.setCallback(boost::bind(&GravityCompensator<T>::reconfigureConfigurationRequest, this, _1, _2));
+}
+
+template <typename T>
+GravityCompensator<T>::~GravityCompensator()
+{
+}
+
+template <typename T>
+bool GravityCompensator<T>::configure()
+{
+    params_.fromParamServer();
+    if(params_.world_frame == " ")
+      ROS_ERROR("GravityCompensator did not find param world_frame");
+    if(params_.sensor_frame == " ")
+      ROS_DEBUG("GravityCompensator did not find param sensor_frame");
+    if(params_.CoG_x == 0)
+      ROS_DEBUG("GravityCompensator did not find param CoG_x");
+    if(params_.CoG_y == 0)
+      ROS_DEBUG("GravityCompensator did not find param CoG_y");
+    if(params_.CoG_z == 0)
+      ROS_DEBUG("GravityCompensator did not find param CoG_z");
+    if(params_.force == 0)
+      ROS_DEBUG("GravityCompensator did not find param force");
+    
+    sensor_frame_ = params_.sensor_frame;
+    cog_.vector.x = params_.CoG_x;
+    cog_.vector.y = params_.CoG_y;
+    cog_.vector.z = params_.CoG_z;
+    force_z_ = params_.force;
+    
+    p_tf_Buffer_ = new tf2_ros::Buffer;
+    p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
+    world_frame_ = params_.world_frame;
+    _num_transform_errors = 0;
+    
+    return true;
+}
+template <typename T>
+bool GravityCompensator<T>::update(const T & data_in, T& data_out)
+{  
+  try
+  {
+    transform_ = p_tf_Buffer_->lookupTransform(world_frame_, data_in.header.frame_id, ros::Time(0));
+    transform_back_ = p_tf_Buffer_->lookupTransform(data_in.header.frame_id, world_frame_, ros::Time(0));
+    _num_transform_errors = 0;
+  }
+  catch (tf2::TransformException ex)
+  {
+    if (_num_transform_errors%100 == 0){
+      ROS_ERROR("%s", ex.what());
+    }
+    _num_transform_errors++;
+  }
+  
+  geometry_msgs::Vector3Stamped temp_force_transformed, temp_torque_transformed, temp_vector_in, temp_vector_out;
+
+  temp_vector_in.vector = data_in.wrench.force;
+  tf2::doTransform(temp_vector_in, temp_force_transformed, transform_);
+
+  temp_vector_in.vector = data_in.wrench.torque;
+  tf2::doTransform(temp_vector_in, temp_torque_transformed, transform_);
+  
+  // Transform CoG Vector
+  geometry_msgs::Vector3Stamped cog_transformed;
+  tf2::doTransform(cog_, cog_transformed, transform_);
+  
+    // Compensate for gravity force
+  temp_force_transformed.vector.z  += force_z_;
+  // Compensation Values for torque result from Crossprod of cog Vector and (0 0 G)
+  temp_torque_transformed.vector.x += (force_z_ * cog_transformed.vector.y);
+  temp_torque_transformed.vector.y -= (force_z_ * cog_transformed.vector.x);
+
+  // Copy Message and Compensate values for Gravity Force and Resulting Torque
+  //geometry_msgs::WrenchStamped compensated_wrench;
+  data_out = data_in;
+  
+  tf2::doTransform(temp_force_transformed, temp_vector_out, transform_back_);
+  data_out.wrench.force = temp_vector_out.vector;
+
+  tf2::doTransform(temp_torque_transformed, temp_vector_out, transform_back_);
+  data_out.wrench.torque = temp_vector_out.vector;
+  return true;
+}
+
+template <typename T>
+void GravityCompensator<T>::reconfigureConfigurationRequest(iirob_filters::GravityCompensationConfig& config, uint32_t level)
+{
+    //params_.fromConfig(config);
+    world_frame_ = params_.world_frame;      
+    sensor_frame_ = params_.sensor_frame;
+    cog_.vector.x = params_.CoG_x;
+    cog_.vector.y = params_.CoG_y;
+    cog_.vector.z = params_.CoG_z;
+    force_z_ = params_.force;
+};
+
+}
 #endif
+

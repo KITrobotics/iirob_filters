@@ -45,31 +45,189 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <iirob_filters/ThresholdParameters.h>
+#include <iirob_filters/ThresholdConfig.h>
+#include <dynamic_reconfigure/server.h>
+#include <filters/filter_base.h>
 
-class ThresholdFilter
+namespace iirob_filters{
+template <typename T>
+class ThresholdFilter: public filters::FilterBase<T>
 {
-
-private:
-  ros::NodeHandle nh_;
-  iirob_filters::ThresholdParameters params_;
-  double threshold_;
-  double threshold_lin_;
-  double threshold_angular_;
-
 public:
-  ThresholdFilter();
-  ThresholdFilter(ros::NodeHandle nh);
+        ThresholdFilter();
+        
+        ~ThresholdFilter();
+        virtual bool configure();
+        virtual bool update(const T & data_in, T& data_out);
+    
+    private:
+        ros::NodeHandle nh_;
+        iirob_filters::ThresholdParameters params_;
+        double threshold_;
+        double threshold_lin_;
+        double threshold_angular_;
+                  
+        dynamic_reconfigure::Server<iirob_filters::ThresholdConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
-  ThresholdFilter(double threshold);
+        void reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level);
 
-  ThresholdFilter(double threshold_lin, double threshold_angular);
-
-  bool init(const ros::NodeHandle &nh);
-
-
-  double applyFilter(double value);
-
-  geometry_msgs::WrenchStamped applyFilter(const geometry_msgs::WrenchStamped& to_filter_wrench);
 };
 
+template <typename T>
+ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
+{
+    reconfigCalibrationSrv_.setCallback(boost::bind(&ThresholdFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
+}
+
+template <typename T>
+ThresholdFilter<T>::~ThresholdFilter()
+{
+}
+
+template <typename T>
+bool ThresholdFilter<T>::configure()
+{
+    params_.fromParamServer();
+    threshold_ = params_.threshold;
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+    if(threshold_lin_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param linear_threshold");
+    if(threshold_angular_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");
+    
+    
+    return true;
+}
+
+template <typename T>
+bool ThresholdFilter<T>::update(const T & data_in, T& data_out)
+{        
+    data_out = data_in;
+  
+    if (fabs(data_in) > threshold_) {
+        double sign = (data_in > 0) ? 1 : -1;
+        data_out = threshold_*sign;
+    }
+    return true;
+}
+
+template <>
+inline bool ThresholdFilter<geometry_msgs::WrenchStamped>::update(const geometry_msgs::WrenchStamped & data_in, geometry_msgs::WrenchStamped& data_out)
+{    
+    data_out = data_in;
+
+    if (fabs(data_in.wrench.force.x) > threshold_lin_)
+    {
+        double sign = (data_in.wrench.force.x > 0) ? 1 : -1;
+        data_out.wrench.force.x = data_in.wrench.force.x-threshold_lin_*sign;
+    }
+    if (fabs(data_in.wrench.force.y) > threshold_lin_)
+    {
+        double sign = (data_in.wrench.force.y > 0) ? 1 : -1;
+        data_out.wrench.force.y = data_in.wrench.force.y-threshold_lin_*sign;
+    }
+    if (fabs(data_in.wrench.force.z) > threshold_lin_)
+    {
+        double sign = (data_in.wrench.force.z > 0) ? 1 : -1;
+        data_out.wrench.force.z = data_in.wrench.force.z-threshold_lin_*sign;
+    }
+    if (fabs(data_in.wrench.torque.x) > threshold_angular_)
+    {
+        double sign = (data_in.wrench.torque.x > 0) ? 1 : -1;
+        data_out.wrench.torque.x = data_in.wrench.torque.x-threshold_angular_*sign;
+    }
+    if (fabs(data_in.wrench.torque.y) > threshold_angular_)
+    {
+        double sign = (data_in.wrench.force.y > 0) ? 1 : -1;
+        data_out.wrench.torque.y = data_in.wrench.torque.y-threshold_angular_*sign;
+    }
+    if (fabs(data_in.wrench.torque.z) > threshold_angular_)
+    {
+        double sign = (data_in.wrench.torque.z > 0) ? 1 : -1;
+        data_out.wrench.torque.z = data_in.wrench.torque.z-threshold_angular_*sign;
+    }
+  return true;
+}
+
+template <typename T>
+void ThresholdFilter<T>::reconfigureConfigurationRequest(iirob_filters::ThresholdConfig& config, uint32_t level)
+{
+    //params_.fromConfig(config);
+    threshold_ = params_.threshold;
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+};
+
+template <typename T>
+class MultiChannelThresholdFilter: public filters::MultiChannelFilterBase<T>
+{
+public:    
+  MultiChannelThresholdFilter();
+  ~MultiChannelThresholdFilter();
+  
+  virtual bool configure();
+  virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
+  
+private:
+
+    //ROS Objects
+    ros::NodeHandle nh_;
+
+    iirob_filters::ThresholdParameters params_;
+    double threshold_;
+    double threshold_lin_;
+    double threshold_angular_;
+    
+    using filters::MultiChannelFilterBase<T>::number_of_channels_;
+};
+
+template <typename T>
+MultiChannelThresholdFilter<T>::MultiChannelThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
+{
+}
+
+template <typename T>
+MultiChannelThresholdFilter<T>::~MultiChannelThresholdFilter()
+{
+}
+
+
+template <typename T>
+bool MultiChannelThresholdFilter<T>::configure()
+{
+    params_.fromParamServer();
+    threshold_ = params_.threshold;
+    threshold_lin_ = params_.linear_threshold;
+    threshold_angular_ = params_.angular_threshold;
+    if(threshold_lin_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param linear_threshold");
+    if(threshold_angular_ == 0)
+	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");
+    
+  return true;
+}
+
+template <typename T>
+bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
+{
+ 
+      
+    if (data_in.size() != number_of_channels_ || data_out.size() != number_of_channels_)
+    {
+      ROS_ERROR("Configured with wrong size config:%d in:%d out:%d", number_of_channels_, (int)data_in.size(), (int)data_out.size());
+      return false;
+    }
+    
+    for(int i = 0; i < data_in.size(); i++)
+    {
+        data_out[i] = data_in[i];
+        if (fabs(data_in[i]) > threshold_) {
+             double sign = (data_in[i] > 0) ? 1 : -1;
+             data_out[i] = threshold_*sign;
+        }
+    }
+    return true;
+};
+}
 #endif
