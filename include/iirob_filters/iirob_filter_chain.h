@@ -21,7 +21,6 @@ class IIrobFilterChain
 private:
      pluginlib::ClassLoader<filters::FilterBase<T1> >* loader_;
 protected:
-    ///<! A vector of pointers to currently constructed filters
     boost::shared_ptr<T2> reference_pointers_;
 public:
   IIrobFilterChain()
@@ -115,7 +114,7 @@ public:
   }
   bool configure()
   {
-      ROS_DEBUG("You are in IIrobFilterBase configure();");
+      ROS_DEBUG("You are in IIrobFilterBase configure(); Nothing implemented");
       return true;  
   }    
 protected:
