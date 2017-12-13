@@ -56,7 +56,11 @@ public:
   MultiChannelKalmanFilter();
   ~MultiChannelKalmanFilter();
   virtual bool configure();
+  bool configure(const std::vector<T>& init_state_vector);
+  bool configure(const std::string& param_namespace);
   virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
+  bool predict(std::vector<T>& data_out);
+  bool computePrediction(std::vector<T>& data_out);
   
 private:
     // Matrices for computation
@@ -83,6 +87,8 @@ private:
   
   bool fromStdVectorToEigenMatrix(std::vector<double>& in, Eigen::MatrixXd& out, int rows, int columns, std::string matrix_name);
   bool fromStdVectorToEigenVector(std::vector<double>& in, Eigen::VectorXd& out, int rows, std::string vector_name);
+  
+  bool isAnotherNamespace;
 };
 
 template <typename T>
@@ -114,47 +120,131 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenVector(std::vector<double>
 }
 
 template <typename T>
-bool MultiChannelKalmanFilter<T>::configure() {
+bool MultiChannelKalmanFilter<T>::configure(const std::vector<T>& init_state_vector) {
+  configure();
+  if (init_state_vector.size() != n) { ROS_ERROR("Kalman: Not valid init state vector!"); return false; }
   
+  for (int i = 0; i < n; i++)
+  {
+    x_hat_new(i) = init_state_vector[i];
+  }
+  return true;
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::configure() {
+  return configure("");
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) {
   params_.fromParamServer();
   
-  dt = params_.dt;
-  n = params_.n;
-  m = params_.m;
+  iirob_filters::KalmanFilterParameters* temp_params_p;
+  if (param_namespace != "") 
+  { 
+    iirob_filters::KalmanFilterParameters temp_params{std::string(nh_.getNamespace() + "/" + param_namespace)}; 
+    temp_params.fromParamServer();
+    temp_params_p = &temp_params;
+  }
+    
+  if (param_namespace != "") 
+  {
+    dt = temp_params_p->dt;
+    n = temp_params_p->n;
+    m = temp_params_p->m;
+  }
+  else 
+  {
+    dt = params_.dt;
+    n = params_.n;
+    m = params_.m;
+  }
   
   I = Eigen::MatrixXd::Zero(n, n);
   I.setIdentity();
+  
   std::vector<double> temp;
   
-  temp = params_.A;
+   if (param_namespace != "") 
+      temp = temp_params_p->A;
+    else 
+      temp = params_.A;
   if (!fromStdVectorToEigenMatrix(temp, A, n, n, "State matrix")) { return false; }
-  
-  temp = params_.C;
+    
+    if (param_namespace != "") 
+      temp = temp_params_p->C;
+    else
+      temp = params_.C;
   if (!fromStdVectorToEigenMatrix(temp, C, m, n, "Output matrix")) { return false; }
   
-  temp = params_.Q;
+    if (param_namespace != "") 
+      temp = temp_params_p->Q;
+    else
+      temp = params_.Q;
   if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; }
   
-  temp = params_.R;
+    if (param_namespace != "") 
+      temp = temp_params_p->R;
+    else
+      temp = params_.R;
   if (!fromStdVectorToEigenMatrix(temp, R, m, m, "Measurement noise covariance")) { return false; }
   
-  temp = params_.P;
+    if (param_namespace != "") 
+      temp = temp_params_p->P;
+    else
+      temp = params_.P;
   if (!fromStdVectorToEigenMatrix(temp, P0, n, n, "Estimate error covariance")) { return false; }
   
-  temp = params_.x0;
+    if (param_namespace != "") 
+      temp = temp_params_p->x0;
+    else
+      temp = params_.x0;
   if (!fromStdVectorToEigenVector(temp, x_hat, n, "Start state vector")) { return false; }
   
   x_hat_new = Eigen::VectorXd::Zero(n);
   P = P0;
   
   initialized = true;
-  
   return true;
 }
 
 template <typename T>
 MultiChannelKalmanFilter<T>::~MultiChannelKalmanFilter()
 {}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::computePrediction(std::vector<T>& data_out)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  
+  Eigen::VectorXd v = Eigen::VectorXd::Zero(n);
+  v = A * x_hat;
+  
+  data_out.resize(n);
+  for (int i = 0; i < data_out.size(); ++i) {
+    data_out[i] = x_hat(i);
+  }
+  
+  return true;
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::predict(std::vector<T>& data_out)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  
+  x_hat = A * x_hat;
+  P = A*P*A.transpose() + Q;
+  
+  data_out.resize(n);
+  for (int i = 0; i < data_out.size(); ++i) {
+    data_out[i] = x_hat(i);
+  }
+  
+  return true;
+}
+
 
 template <typename T>
 bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
@@ -175,13 +265,13 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
   P = (I - K*C)*P; 
   x_hat = x_hat_new;
   
-  data_out.resize(m);
-  for (int i = 0; i < m; ++i) {
+  data_out.resize(n);
+  for (int i = 0; i < data_out.size(); ++i) {
     data_out[i] = x_hat(i);
   }
   
   return true;
-};
+}
 
 }
 #endif
