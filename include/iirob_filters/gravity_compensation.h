@@ -136,6 +136,10 @@ bool GravityCompensator<T>::configure()
     cog_.vector.z = params_.CoG_z;
     force_z_ = params_.force;
     
+    ROS_INFO("Gravity Compensation Params: CoG_x:%f, CoG_y:%f, CoG_z:%f; force: %f sensorframe: %s" ,
+    cog_.vector.x,cog_.vector.y,cog_.vector.z,force_z_,sensor_frame_.c_str());
+    
+    
     p_tf_Buffer_ = new tf2_ros::Buffer;
     p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
     world_frame_ = params_.world_frame;
@@ -200,6 +204,8 @@ void GravityCompensator<T>::reconfigureConfigurationRequest(iirob_filters::Gravi
     cog_.vector.y = params_.CoG_y;
     cog_.vector.z = params_.CoG_z;
     force_z_ = params_.force;
+    
+  
 };
 
 }
