@@ -126,7 +126,7 @@ bool MultiChannelKalmanFilter<T>::configure(const std::vector<T>& init_state_vec
   
   for (int i = 0; i < n; i++)
   {
-    x_hat_new(i) = init_state_vector[i];
+    x_hat(i) = init_state_vector[i];
   }
   return true;
 }
