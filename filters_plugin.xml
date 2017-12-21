@@ -25,4 +25,11 @@
     This is a low pass filter which works on a stream of vectors of doubles.
   </description>
   </class>
+  
+  <class name="iirob_filters/MultiChannelKalmanFilter" type="iirob_filters::MultiChannelKalmanFilter<double>"
+	    base_class_type="filters::MultiChannelFilterBase<double>">
+      <description>
+	  kalman filter
+      </description>
+    </class>
 </library>
