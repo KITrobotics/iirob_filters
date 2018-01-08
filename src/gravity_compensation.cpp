@@ -41,4 +41,5 @@
 #include <pluginlib/class_list_macros.h>
 #include <iirob_filters/gravity_compensation.h>
 
-PLUGINLIB_EXPORT_CLASS(iirob_filters::GravityCompensator<double>, filters::FilterBase<double>)
+PLUGINLIB_EXPORT_CLASS(iirob_filters::GravityCompensator<geometry_msgs::WrenchStamped>, filters::FilterBase<geometry_msgs::WrenchStamped>)
+
