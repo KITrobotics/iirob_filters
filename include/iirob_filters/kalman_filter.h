@@ -223,7 +223,7 @@ bool MultiChannelKalmanFilter<T>::computePrediction(std::vector<T>& data_out)
   
   data_out.resize(n);
   for (int i = 0; i < data_out.size(); ++i) {
-    data_out[i] = x_hat(i);
+    data_out[i] = v(i);
   }
   
   return true;
