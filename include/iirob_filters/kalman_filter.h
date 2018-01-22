@@ -17,17 +17,20 @@ public:
   virtual bool configure();
   bool configure(const std::string& param_namespace);
   virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
-  bool update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t);
+  bool update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t, bool update_Q_matrix = false);
 
 private:
     // Matrices for computation
-  Eigen::MatrixXd A, At, C, Q, R, P, K, P0;
+  Eigen::MatrixXd A, At, C, Q, Q_coeff, Q_exponent, R, P, K, P0;
 
   // System dimensions
   int m, n;
 
   // Discrete time step
   double dt;
+  
+  // Variance of process noise (for a time dependent Q)
+  double Q_variance;
 
   // Is the filter initialized?
   bool initialized;
@@ -76,6 +79,7 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenMatrix(std::vector<double>
       ++it;
     }
   }
+  return true;
 }
 
 template <typename T>
@@ -86,6 +90,7 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenVector(std::vector<double>
   {
     out(i) = in[i];
   }
+  return true;
 }
 
 template <typename T>
@@ -96,6 +101,7 @@ bool MultiChannelKalmanFilter<T>::configure() {
   dt = params_.dt;
   n = params_.n;
   m = params_.m;  
+  Q_variance = params_.Q_variance;
   I = Eigen::MatrixXd::Zero(n, n);
   I.setIdentity();
   std::vector<double> temp;
@@ -111,6 +117,12 @@ bool MultiChannelKalmanFilter<T>::configure() {
   
   temp = params_.Q;
   if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; } 
+  
+  temp = params_.Q_coeff;
+  if (!fromStdVectorToEigenMatrix(temp, Q_coeff, n, n, "Process noise covariance (coefficients of dynamic part of Q)")) { return false; } 
+  
+  temp = params_.Q_exponent;
+  if (!fromStdVectorToEigenMatrix(temp, Q_exponent, n, n, "Process noise covariance (exponents of the time difference)")) { return false; } 
 
   temp = params_.R;
   if (!fromStdVectorToEigenMatrix(temp, R, m, m, "Measurement noise covariance")) { return false; }
@@ -146,12 +158,14 @@ bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) 
     dt = temp_params_p->dt;
     n = temp_params_p->n;
     m = temp_params_p->m;
+    Q_variance = temp_params_p->Q_variance;
   }
   else 
   {
     dt = params_.dt;
     n = params_.n;
     m = params_.m;
+    Q_variance = params_.Q_variance;
   }
   
   I = Eigen::MatrixXd::Zero(n, n);
@@ -182,6 +196,18 @@ bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) 
     else
       temp = params_.Q;
   if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; }
+  
+    if (param_namespace != "") 
+      temp = temp_params_p->Q_coeff;
+    else
+      temp = params_.Q_coeff;
+  if (!fromStdVectorToEigenMatrix(temp, Q_coeff, n, n, "Process noise covariance (coefficients of dynamic part of Q)")) { return false; }
+  
+    if (param_namespace != "") 
+      temp = temp_params_p->Q_exponent;
+    else
+      temp = params_.Q_exponent;
+  if (!fromStdVectorToEigenMatrix(temp, Q_exponent, n, n, "Process noise covariance (exponents of the time difference)")) { return false; }
   
     if (param_namespace != "") 
       temp = temp_params_p->R;
@@ -240,7 +266,7 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
 }
 
 template <typename T>
-bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t)
+bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t, bool update_Q_matrix)
 {
   if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
   
@@ -260,8 +286,22 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
       }
     }
   }
+  
+  //update q matrix if requested
+  Eigen::MatrixXd Q_updated = Q;
+  if (update_Q_matrix)
+  {
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            // adds x*delta_t^y to entry in Q 
+            Q_updated(i,j) = Q(i,j) + Q_variance * Q_coeff(i,j)*pow(delta_t, Q_exponent(i,j));
+        }
+    }
+  }
+  
+  
   x_hat_new = (A_t+A) * x_hat;
-  P = (A_t+A)*P*((A_t+A).transpose()) + Q;
+  P = (A_t+A)*P*((A_t+A).transpose()) + Q_updated;
   K = P*C.transpose()*(C*P*C.transpose() + R).inverse(); // nxm
   x_hat_new += K * (y - C*x_hat_new);
   P = (I - K*C)*P; 
