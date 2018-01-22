@@ -95,8 +95,7 @@ private:
     geometry_msgs::TransformStamped transform_, transform_back_;
   
     uint _num_transform_errors;
-    
-                      
+                
     dynamic_reconfigure::Server<iirob_filters::GravityCompensationConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
 
     void reconfigureConfigurationRequest(iirob_filters::GravityCompensationConfig& config, uint32_t level);
@@ -138,7 +137,6 @@ bool GravityCompensator<T>::configure()
     
     ROS_INFO("Gravity Compensation Params: CoG_x:%f, CoG_y:%f, CoG_z:%f; force: %f sensorframe: %s" ,
     cog_.vector.x,cog_.vector.y,cog_.vector.z,force_z_,sensor_frame_.c_str());
-    
     
     p_tf_Buffer_ = new tf2_ros::Buffer;
     p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
