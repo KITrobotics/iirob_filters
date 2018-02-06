@@ -46,6 +46,10 @@
 #include <iirob_filters/KalmanFilterParameters.h>
 #include <ros/ros.h>
 
+// #ifndef M_PI
+// #define M_PI    3.14159265358979323846f
+// #endif
+
 
 
 namespace iirob_filters {
@@ -61,10 +65,13 @@ public:
   virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
   bool predict(std::vector<T>& data_out);
   bool computePrediction(std::vector<T>& data_out);
+  bool likelihood(const std::vector<T>& data_in, double& data_out);
+  bool getGatingMatrix(Eigen::MatrixXd& data_out);
+  bool getCovarianceMatrix(Eigen::MatrixXd& data_out);
   
 private:
     // Matrices for computation
-  Eigen::MatrixXd A, C, Q, R, P, K, P0;
+  Eigen::MatrixXd A, C, Q, R, P, K, P0, gatingMatrix;
 
   // System dimensions
   int m, n;
@@ -164,6 +171,7 @@ bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) 
   I = Eigen::MatrixXd::Zero(n, n);
   I.setIdentity();
   
+  
   std::vector<double> temp;
   
    if (param_namespace != "") 
@@ -204,6 +212,9 @@ bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) 
   
   x_hat_new = Eigen::VectorXd::Zero(n);
   P = P0;
+  
+  //gatingMatrix = Eigen::MatrixXd::Zero(m, m);
+  gatingMatrix = C * P * C.transpose() + R;
   
   initialized = true;
   return true;
@@ -260,7 +271,8 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
   
   x_hat_new = A * x_hat;
   P = A*P*A.transpose() + Q;
-  K = P*C.transpose()*(C*P*C.transpose() + R).inverse(); // nxm
+  gatingMatrix = C * P * C.transpose() + R; 
+  K = P*C.transpose()*gatingMatrix.inverse(); // nxm
   x_hat_new += K * (y - C*x_hat_new);
   P = (I - K*C)*P; 
   x_hat = x_hat_new;
@@ -269,6 +281,67 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
   for (int i = 0; i < data_out.size(); ++i) {
     data_out[i] = x_hat(i);
   }
+  
+  return true;
+}
+
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::getGatingMatrix(Eigen::MatrixXd& data_out)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  data_out = gatingMatrix;
+  return true;
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::getCovarianceMatrix(Eigen::MatrixXd& data_out)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  data_out = P;
+  return true;
+}
+
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::likelihood(const std::vector<T>& data_in, double& data_out)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  
+  if(data_in.size() != m) { ROS_ERROR("Kalman: Not valid measurement vector!"); return false; }
+  
+  Eigen::VectorXd measurement(m);
+  for (int i = 0; i < m; ++i) { 
+    measurement(i) = data_in[i];	
+  }
+//   std::cout << "measurement: \n" << measurement << std::endl;
+  
+  // convert prediction to measurement space
+  Eigen::VectorXd prediction = C * A * x_hat;
+//   std::cout << "prediction: \n" << prediction << std::endl;
+  
+  // vector of prediction (origin = current state)
+  Eigen::VectorXd continuousPrediction = prediction - C * x_hat;
+//   std::cout << "continuousPrediction: \n" << continuousPrediction << std::endl;
+
+  // assumed interpolated prediction = current state + dt * prediction
+  Eigen::VectorXd timeShiftedPrediction = ( C * x_hat ) + ( dt * continuousPrediction );
+//   std::cout << "timeShiftedPrediction: \n" << timeShiftedPrediction << std::endl;
+  
+  Eigen::VectorXd d = timeShiftedPrediction - measurement;
+//   std::cout << "d: \n" << d << std::endl;
+  
+  
+//   std::cout << "gatingMatrix: \n" << gatingMatrix << std::endl;
+
+  // calculate exponent
+  const double e = -0.5 * d.transpose() * gatingMatrix.inverse() * d;
+//   std::cout << "e: \n" << e << std::endl;
+
+  // get normal distribution value
+  data_out = (1. / (std::pow(2. * M_PI, (double) m * .5)
+		  * std::sqrt(gatingMatrix.determinant()))) * std::exp(e);
+//   std::cout << "data_out: \n" << data_out << std::endl;
   
   return true;
 }

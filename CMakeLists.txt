@@ -66,7 +66,6 @@ add_library(${PROJECT_NAME}
    include/${PROJECT_NAME}/low_pass_filter.h
    include/${PROJECT_NAME}/gravity_compensation.h
    include/${PROJECT_NAME}/threshold_filter.h
-   include/${PROJECT_NAME}/FilterInterface.h  
    include/${PROJECT_NAME}/moving_mean_filter.h
 )
 
