@@ -96,6 +96,8 @@ bool ThresholdFilter<T>::configure()
     if(threshold_angular_ == 0)
 	  ROS_ERROR("ThresholdFilter did not find param angular_threshold");
     
+    ROS_INFO("Threshhold Filter Params: Threshold: %f; Treshold lin.: %f; Threshold Anglular: %f" ,
+    threshold_, threshold_lin_, threshold_angular_);
     
     return true;
 }
@@ -122,30 +124,54 @@ inline bool ThresholdFilter<geometry_msgs::WrenchStamped>::update(const geometry
         double sign = (data_in.wrench.force.x > 0) ? 1 : -1;
         data_out.wrench.force.x = data_in.wrench.force.x-threshold_lin_*sign;
     }
+    else
+    {
+        data_out.wrench.force.x = 0;
+    }
     if (fabs(data_in.wrench.force.y) > threshold_lin_)
     {
         double sign = (data_in.wrench.force.y > 0) ? 1 : -1;
         data_out.wrench.force.y = data_in.wrench.force.y-threshold_lin_*sign;
+    }
+    else
+    {
+        data_out.wrench.force.y = 0;
     }
     if (fabs(data_in.wrench.force.z) > threshold_lin_)
     {
         double sign = (data_in.wrench.force.z > 0) ? 1 : -1;
         data_out.wrench.force.z = data_in.wrench.force.z-threshold_lin_*sign;
     }
+    else
+    {
+        data_out.wrench.force.z = 0;
+    }
     if (fabs(data_in.wrench.torque.x) > threshold_angular_)
     {
         double sign = (data_in.wrench.torque.x > 0) ? 1 : -1;
         data_out.wrench.torque.x = data_in.wrench.torque.x-threshold_angular_*sign;
+    }
+    else
+    {
+        data_out.wrench.torque.x = 0;
     }
     if (fabs(data_in.wrench.torque.y) > threshold_angular_)
     {
         double sign = (data_in.wrench.force.y > 0) ? 1 : -1;
         data_out.wrench.torque.y = data_in.wrench.torque.y-threshold_angular_*sign;
     }
+    else
+    {
+        data_out.wrench.torque.y = 0;
+    }
     if (fabs(data_in.wrench.torque.z) > threshold_angular_)
     {
         double sign = (data_in.wrench.torque.z > 0) ? 1 : -1;
         data_out.wrench.torque.z = data_in.wrench.torque.z-threshold_angular_*sign;
+    }
+    else
+    {
+        data_out.wrench.torque.z = 0;
     }
   return true;
 }
@@ -225,6 +251,10 @@ bool MultiChannelThresholdFilter<T>::update(const std::vector<T>& data_in, std::
         if (fabs(data_in[i]) > threshold_) {
              double sign = (data_in[i] > 0) ? 1 : -1;
              data_out[i] = threshold_*sign;
+        }
+        else
+        {
+            data_out[i] = 0;
         }
     }
     return true;

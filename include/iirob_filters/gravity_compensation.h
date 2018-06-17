@@ -129,18 +129,18 @@ bool GravityCompensator<T>::configure()
     if(params_.force == 0)
       ROS_DEBUG("GravityCompensator did not find param force");
     
+    world_frame_ = params_.world_frame;
     sensor_frame_ = params_.sensor_frame;
     cog_.vector.x = params_.CoG_x;
     cog_.vector.y = params_.CoG_y;
     cog_.vector.z = params_.CoG_z;
     force_z_ = params_.force;
     
-    ROS_INFO("Gravity Compensation Params: CoG_x:%f, CoG_y:%f, CoG_z:%f; force: %f sensorframe: %s" ,
-    cog_.vector.x,cog_.vector.y,cog_.vector.z,force_z_,sensor_frame_.c_str());
+    ROS_INFO("Gravity Compensation Params: world_frame: %s; sensor_frame: %s; CoG_x:%f; CoG_y:%f; CoG_z:%f; force: %f." , world_frame_.c_str(), sensor_frame_.c_str(),
+    cog_.vector.x,cog_. vector.y,cog_. vector.z,force_z_);
     
     p_tf_Buffer_ = new tf2_ros::Buffer;
     p_tf_Listener = new tf2_ros::TransformListener(*p_tf_Buffer_,true);
-    world_frame_ = params_.world_frame;
     _num_transform_errors = 0;
     
     return true;

@@ -73,7 +73,6 @@ private:
         int divider_;
         std::map<std::string,std::string> map_param_;
 
-
         // Filter parametrs
         double b1;
         double a1;
@@ -84,9 +83,7 @@ private:
         Eigen::Matrix<double,6,1> msg_filtered, msg_filtered_old, msg_old;
           
         dynamic_reconfigure::Server<iirob_filters::LowPassFilterConfig> reconfigCalibrationSrv_; // Dynamic reconfiguration service        
-
         void reconfigureConfigurationRequest(iirob_filters::LowPassFilterConfig& config, uint32_t level);
-  
 };
 
 
@@ -108,7 +105,7 @@ bool LowPassFilter<T>::configure()
     sampling_frequency_ = params_.SamplingFrequency;
     damping_frequency_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
-    divider_ = params_.divider;    
+    divider_ = params_.divider;
     if(sampling_frequency_ == 0)
         ROS_ERROR("LowPassFilter did not find param SamplingFrequency");
     if(damping_frequency_ == 0)
@@ -118,6 +115,9 @@ bool LowPassFilter<T>::configure()
     if(divider_ == 0)
         ROS_ERROR("Divider value not correct - cannot be 0. Check .param or .yaml files");
     
+    ROS_INFO("Low Pass Filter Params: Sampling Frequency:%f, Damping Frequency:%f, Damping Intensity:%f; Divider: %d " ,
+    sampling_frequency_, damping_frequency_, damping_intensity_,  divider_);
+
     a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
     b1 = 1 - a1;
     
@@ -152,7 +152,6 @@ inline bool LowPassFilter<geometry_msgs::WrenchStamped>::update(const geometry_m
     data_out.wrench.torque.y = msg_filtered[4];
     data_out.wrench.torque.z = msg_filtered[5];
     return true;
-    
 }
 
 template<typename T>
@@ -172,6 +171,7 @@ void LowPassFilter<T>::reconfigureConfigurationRequest(iirob_filters::LowPassFil
     sampling_frequency_ = params_.SamplingFrequency;
     damping_intensity_ = params_.DampingFrequency;
     damping_intensity_ = params_.DampingIntensity;
+    divider_ = params_.divider;
 };
 
 /* A lp filter which works on double arrays.
@@ -244,6 +244,9 @@ bool MultiChannelLowPassFilter<T>::configure()
     if(divider_ == 0)
         ROS_ERROR("Divider value not correct - cannot be 0. Check .param or .yaml files");
     
+    ROS_INFO("Low Pass Filter Params: Sampling Frequency:%f, Damping Frequency:%f, Damping Intensity:%f; Divider: %d " ,
+    sampling_frequency_, damping_frequency_, damping_intensity_,  divider_);
+
     a1 = exp(-1 / sampling_frequency_ * (2 * M_PI * damping_frequency_) / (pow(10, damping_intensity_ / -10.0)));
     b1 = 1 - a1;
     divider_counter = 1;
@@ -256,7 +259,6 @@ bool MultiChannelLowPassFilter<T>::configure()
     }
   return true;
 }
-
 
 template <typename T>
 bool MultiChannelLowPassFilter<T>::update(const std::vector<T> & data_in, std::vector<T>& data_out)
@@ -274,7 +276,6 @@ bool MultiChannelLowPassFilter<T>::update(const std::vector<T> & data_in, std::v
   }
   old_value = data_in;
   return true;
-    
 };
 
 }
