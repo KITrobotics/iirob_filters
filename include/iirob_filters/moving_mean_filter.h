@@ -87,6 +87,9 @@ bool MovingMeanFilter<T>::configure()
 {
     params_.fromParamServer();
     divider_ = params_.divider;
+
+    ROS_INFO("Moving Mean Filter Params: Divider: %d " , divider_);
+
     if(divider_ == 0)
         ROS_ERROR("MovingMeanFilter did not find param divider");
     return true;

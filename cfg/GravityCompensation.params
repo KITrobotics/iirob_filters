@@ -4,12 +4,12 @@ gen = ParameterGenerator()
 
 # Add a Gravity Compensation group
 my_group = gen.add_group("GravityCompensation")
+my_group.add("world_frame", paramtype="std::string", description="refrence coordinate system", default="", configurable=True)
 my_group.add("sensor_frame", paramtype="std::string", description="sensor coordinate system", default="", configurable=True)
-my_group.add("world_frame", paramtype="std::string", description="tranformed coordinate system", default="", configurable=True)
 my_group.add("CoG_x", paramtype="double", description="value", default=0, configurable=True)
 my_group.add("CoG_y", paramtype="double", description="value", default=0, configurable=True)
 my_group.add("CoG_z", paramtype="double", description="value", default=0, configurable=True)
-my_group.add("force", paramtype="double", description="value", default=0.0, configurable=True)
+my_group.add("force", paramtype="double", description="value", default=0, configurable=True)
 
 #Syntax : Package, Node, Config Name(The final name will be MyDummyConfig)
 exit(gen.generate("iirob_filters", "iirob_filters", "GravityCompensation"))
