@@ -5,11 +5,11 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   dynamic_reconfigure 
   eigen_conversions
+  filters
   geometry_msgs
   roscpp
   rosparam_handler
   tf2_ros
-  filters
 )
 
 find_package(Eigen3)
@@ -40,7 +40,7 @@ generate_ros_parameter_files(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS eigen_conversions geometry_msgs roscpp filters
+  CATKIN_DEPENDS eigen_conversions filters geometry_msgs roscpp rosparam_handler
   DEPENDS Eigen
   LIBRARIES ${PROJECT_NAME}
 )
