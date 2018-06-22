@@ -284,8 +284,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   if (!found) { result = not_found; }
   ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
     temp = parameters.At;
-    if (!fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix")) { return false; }
-    isDynamicUpdate = true;
+    if (fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix"))
+    {
+      isDynamicUpdate = true; 
+    }
   }
   else 
   { 
@@ -331,7 +333,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   {
     temp = parameters.Q_coeff;
     if (!fromStdVectorToEigenMatrix(temp, Q_coeff, n, n, 
-      "Process noise covariance (coefficients of dynamic part of Q)")) { return false; } 
+      "Process noise covariance (coefficients of dynamic part of Q)")) 
+    { 
+      skipDynamicPartQ = true;
+    } 
   }
   else 
   { 
@@ -348,7 +353,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   {
     temp = parameters.Q_exponent;
     if (!fromStdVectorToEigenMatrix(temp, Q_exponent, n, n, 
-      "Process noise covariance (exponents of the time difference)")) { return false; } 
+      "Process noise covariance (exponents of the time difference)")) 
+    { 
+      skipDynamicPartQ = true;
+    } 
   }
   else 
   { 
