@@ -249,7 +249,7 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   if(ros::param::has(std::string(param_namespace + "/" + "A")))
   {
     temp = parameters.A;
-    if (!fromStdVectorToEigenMatrix(temp, A, n, n, "Dynamic part of state matrix")) { return false; }
+    if (!fromStdVectorToEigenMatrix(temp, A, n, n, "State matrix")) { return false; }
   }
   else 
   { 
