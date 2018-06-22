@@ -496,11 +496,12 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
 template <typename T>
 bool MultiChannelKalmanFilter<T>::getCurrentState(std::vector<T>& data_out)
 {
-    data_out.resize(n);
-    for (int i = 0; i < n; ++i) {
-        data_out[i] = x_hat(i);
-    }
-    return true;    
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  data_out.resize(n);
+  for (int i = 0; i < n; ++i) {
+      data_out[i] = x_hat(i);
+  }
+  return true;    
 }
 
 template <typename T>
