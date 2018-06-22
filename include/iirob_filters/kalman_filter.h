@@ -210,6 +210,12 @@ bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) 
 template <typename T>
 bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameters& parameters, const std::string& param_namespace)
 {
+  std::string result = "", param = param_namespace + "/" + "dt", not_found = "not found heheh";
+  
+  bool found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
+  
   if(ros::param::has(std::string(param_namespace + "/" + "dt")))
   {
     dt = parameters.dt;
@@ -220,6 +226,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     return false;
   }
   
+    param = std::string(param_namespace + "/" + "n");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "n")))
   {
     n = parameters.n;
@@ -230,6 +240,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     return false;
   }
   
+    param = std::string(param_namespace + "/" + "m");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "m")))
   {
     m = parameters.m;
@@ -248,6 +262,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   
   std::vector<double> temp;
   
+    param = std::string(param_namespace + "/" + "A");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "A")))
   {
     temp = parameters.A;
@@ -261,6 +279,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   
   if(ros::param::has(std::string(param_namespace + "/" + "At")))
   {
+    param = std::string(param_namespace + "/" + "At");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
     temp = parameters.At;
     if (!fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix")) { return false; }
     isDynamicUpdate = true;
@@ -269,7 +291,11 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   { 
     ROS_DEBUG("At is not available!"); 
   }
-
+  
+    param = std::string(param_namespace + "/" + "C");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "C")))
   {
     temp = parameters.C;
@@ -281,6 +307,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     return false;
   }
 
+    param = std::string(param_namespace + "/" + "Q");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "Q")))
   {
     temp = parameters.Q;
@@ -292,6 +322,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     return false;
   }
   
+    param = std::string(param_namespace + "/" + "Q_coeff");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   bool skipDynamicPartQ = false;
   if(isDynamicUpdate && ros::param::has(std::string(param_namespace + "/" + "Q_coeff")))
   {
@@ -305,6 +339,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     skipDynamicPartQ = true;
   }
   
+    param = std::string(param_namespace + "/" + "Q_exponent");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(isDynamicUpdate && !skipDynamicPartQ && 
     ros::param::has(std::string(param_namespace + "/" + "Q_exponent")))
   {
@@ -318,6 +356,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     skipDynamicPartQ = true;
   }
   
+    param = std::string(param_namespace + "/" + "Q_variance");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(isDynamicUpdate && !skipDynamicPartQ && 
     ros::param::has(std::string(param_namespace + "/" + "Q_variance")))
   {
@@ -329,6 +371,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     ROS_DEBUG("Q_variance is not available!"); 
   }
 
+    param = std::string(param_namespace + "/" + "R");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "R")))
   {
     temp = parameters.R;
@@ -341,6 +387,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   }
   
 
+    param = std::string(param_namespace + "/" + "P");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "P")))
   {
     temp = parameters.P;
@@ -352,6 +402,10 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     return false;
   }
   
+    param = std::string(param_namespace + "/" + "x0");
+   found = ros::param::search(param_namespace, param, result);
+  if (!found) { result = not_found; }
+  ROS_ERROR("param_namespace: %s, param: %s, result: %s", param_namespace.c_str(), param.c_str(), result.c_str());
   if(ros::param::has(std::string(param_namespace + "/" + "x0")))
   {
     temp = parameters.x0;
