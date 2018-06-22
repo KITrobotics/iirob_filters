@@ -30,6 +30,7 @@
   <depend>roscpp</depend>
   <depend>rosparam_handler</depend>
   <depend>tf2_ros</depend>  
+  <depend>rostest</depend>
   
   <export>
     <filters plugin="${prefix}/filters_plugin.xml"/>

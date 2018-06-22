@@ -76,6 +76,7 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 
+
 #############
 ## Install ##
 #############
@@ -109,3 +110,17 @@ install(FILES filters_plugin.xml
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_executable(kalman_test test/test_kalman.cpp)
+  target_link_libraries(kalman_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GTEST_LIBRARIES}) 
+  add_rostest(test/test_kalman.launch)
+
+  if(TARGET tests)
+    add_dependencies(tests kalman_test)
+  endif()
+endif()
+

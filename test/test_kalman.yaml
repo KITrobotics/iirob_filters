@@ -1,0 +1,255 @@
+
+# Kalman filter params:
+  # dt="time between two updates"
+  # n="number of states"
+  # m="number of measurements"
+  # A="System dynamics matrix: nxn"
+  # At="System dynamics matrix (dynamic part): nxn"
+  # C="Output matrix: mxn"
+  # Q="Process noise covariance: nxn"
+  # Q_coeff="coefficients of the dynamic part of Q"
+  # Q_exponent="exponents of the time differnce"
+  # Q_variance="variance of the process noise"
+  # R="Measurement noise covariance: mxm"
+  # P="Estimate error covariance: nxn"
+  # x0="start state vector"
+  
+  # KalmanFilter="default namespace for parameters" -> configure() can be used without arguments
+  
+  # x0 can be empty
+  # if At is empty or not valid -> update with delta_t is not available
+  # if Q_coeff -> Q_exponent and Q_variance are not considered and 
+  #     update of the Q matrix is not available
+
+
+# default namespace, parameters are set appropriate 
+KalmanFilter:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+KalmanFilterTestWithoutParameters:
+  hasParameter: false
+  
+KalmanFilterTestDt:
+  dt: 0
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+KalmanFilterTestN:
+  dt: 0.01
+  n: 0
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+KalmanFilterTestM:
+  dt: 0.01
+  n: 1
+  m: 0
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+  
+KalmanFilterTestParameterA:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1,1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+KalmanFilterTestParameterC:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1,1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+   
+KalmanFilterTestParameterQ:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0,1]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+    
+KalmanFilterTestParameterR:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1,1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0]
+  
+    
+KalmanFilterTestParameterP:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1,1]
+  # n
+  x0: [0]
+  
+KalmanFilterTestParameterX0:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: [0,1]
+  
+KalmanFilterTestParameterX0Empty:
+  dt: 0.01
+  n: 1
+  m: 1
+  # n x n
+  A: [1]
+  # m x n
+  C: [1]
+  # n x n
+  Q: [0]
+  # m x m
+  R: [0.1]
+  # n x n
+  P: [1]
+  # n
+  x0: []
+  
+#KalmanFilter:
+  #dt: 0.05
+  #n: 6
+  #m: 2
+  ## n x n
+  #A: [1, 0, 0.05, 0, 0.00125, 0, 
+      #0, 1, 0, 0.05, 0, 0.00125, 
+      #0, 0, 1, 0, 0.05, 0,
+      #0, 0, 0, 1, 0, 0.05,
+      #0, 0, 0, 0, 1, 0,
+      #0, 0, 0, 0, 0, 1]
+  ## m x n
+  #C: [1, 0, 0, 0, 0, 0, 
+      #0, 1, 0, 0, 0, 0]
+  ## n x n
+  #Q: [225, 0, 0, 0, 0, 0, 
+      #0, 225, 0, 0, 0, 0, 
+      #0, 0, 0.05, 0, 0, 0,
+      #0, 0, 0, 0.05, 0, 0,
+      #0, 0, 0, 0, 0.05, 0,
+      #0, 0, 0, 0, 0, 0.05]
+  ## m x m
+  #
+  #R: [0.0144, 0,
+      #0, 0.0144]
+  ## n x n
+  #P: [1, 0, 0, 0, 0, 0, 
+      #0, 1, 0, 0, 0, 0, 
+      #0, 0, 1, 0, 0, 0,
+      #0, 0, 0, 1, 0, 0,
+      #0, 0, 0, 0, 1, 0,
+      #0, 0, 0, 0, 0, 1]
+  ## n
+  #x0: [0, 0, 0, 0, 0, 0]
+  ##params: {number_of_elements_: 5}
+ 

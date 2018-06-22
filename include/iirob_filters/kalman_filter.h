@@ -45,11 +45,7 @@
 #include <Eigen/Dense>
 #include <iirob_filters/KalmanFilterParameters.h>
 #include <ros/ros.h>
-
-// #ifndef M_PI
-// #define M_PI    3.14159265358979323846f
-// #endif
-
+#include <math.h>
 
 
 namespace iirob_filters {
@@ -60,18 +56,22 @@ public:
   MultiChannelKalmanFilter();
   ~MultiChannelKalmanFilter();
   virtual bool configure();
-  bool configure(const std::vector<T>& init_state_vector);
+  bool configure(const std::vector<T>& init_state_vector, const std::string param_namespace = "");
   bool configure(const std::string& param_namespace);
   virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
+  bool update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t, bool update_Q_matrix = false);
   bool predict(std::vector<T>& data_out);
   bool computePrediction(std::vector<T>& data_out);
-  bool likelihood(const std::vector<T>& data_in, double& data_out);
+  bool isInitializated(); 
+  bool getCurrentState(std::vector<T>& data_out); 
+  bool getErrorCovarianceMatrix(Eigen::MatrixXd& data_out);
+  bool resetErrorCovAndState();
   bool getGatingMatrix(Eigen::MatrixXd& data_out);
-  bool getCovarianceMatrix(Eigen::MatrixXd& data_out);
+  bool likelihood(const std::vector<T>& data_in, double& data_out);
   
 private:
-    // Matrices for computation
-  Eigen::MatrixXd A, C, Q, R, P, K, P0, gatingMatrix;
+  // Matrices for computation
+  Eigen::MatrixXd A, At, C, Q, Q_coeff, Q_exponent, R, P, K, P0, gatingMatrix;
 
   // System dimensions
   int m, n;
@@ -81,6 +81,9 @@ private:
 
   // Is the filter initialized?
   bool initialized;
+  
+  // Variance of process noise (for a time dependent Q)
+  double Q_variance;
 
   // n-size identity
   Eigen::MatrixXd I;
@@ -88,22 +91,42 @@ private:
   // Estimated states
   Eigen::VectorXd x_hat, x_hat_new;
   
-  ros::NodeHandle nh_;
+  ros::NodeHandle nh;
   
-  iirob_filters::KalmanFilterParameters params_; 
+  bool can_update_Q_matrix;
   
   bool fromStdVectorToEigenMatrix(std::vector<double>& in, Eigen::MatrixXd& out, int rows, int columns, std::string matrix_name);
   bool fromStdVectorToEigenVector(std::vector<double>& in, Eigen::VectorXd& out, int rows, std::string vector_name);
   
-  bool isAnotherNamespace;
+  double fac(double x);
+  
+  bool getParams(iirob_filters::KalmanFilterParameters&, const std::string&);
+  
+  bool isDynamicUpdate;
 };
 
 template <typename T>
-MultiChannelKalmanFilter<T>::MultiChannelKalmanFilter() : nh_("~"), params_{std::string(nh_.getNamespace() + "/KalmanFilter")} {}
+double MultiChannelKalmanFilter<T>::fac(double x){
+    double f;
+    if (x==0 || x==1) {
+      f = 1;
+    }
+    else{
+      f = fac(x-1) * x;
+    }
+    return f;
+}
 
 template <typename T>
-bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenMatrix(std::vector<double>& in, Eigen::MatrixXd& out, int rows, int columns, std::string matrix_name) {
-  if (in.size() != rows * columns) { ROS_ERROR("%s is not valid!", matrix_name.c_str()); return false; }
+MultiChannelKalmanFilter<T>::MultiChannelKalmanFilter() : nh("~") 
+{
+  initialized = isDynamicUpdate = can_update_Q_matrix = false;
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenMatrix(std::vector<double>& in, Eigen::MatrixXd& out, int rows, 
+							     int columns, std::string matrix_name) {
+  if (in.size() != rows * columns || in.size() == 0) { ROS_ERROR("%s is not valid!", matrix_name.c_str()); return false; }
   out.resize(rows, columns);
   std::vector<double>::iterator it = in.begin();
   for (int i = 0; i < rows; ++i)
@@ -117,6 +140,12 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenMatrix(std::vector<double>
 }
 
 template <typename T>
+bool MultiChannelKalmanFilter<T>::isInitializated()
+{
+    return initialized; 
+}
+
+template <typename T>
 bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenVector(std::vector<double>& in, Eigen::VectorXd& out, int rows, std::string vector_name) {
   if (in.size() != rows) { ROS_ERROR("%s vector is not valid!", vector_name.c_str()); return false; }
   out.resize(rows);
@@ -127,11 +156,13 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenVector(std::vector<double>
 }
 
 template <typename T>
-bool MultiChannelKalmanFilter<T>::configure(const std::vector<T>& init_state_vector) {
-  configure();
+bool MultiChannelKalmanFilter<T>::configure(const std::vector<T>& init_state_vector, const std::string param_namespace) {
+  
+  if (!configure(param_namespace)) { return false; }
+  
   if (init_state_vector.size() != n) { ROS_ERROR("Kalman: Not valid init state vector!"); return false; }
   
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < init_state_vector.size(); i++)
   {
     x_hat(i) = init_state_vector[i];
   }
@@ -145,79 +176,110 @@ bool MultiChannelKalmanFilter<T>::configure() {
 
 template <typename T>
 bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) {
-  params_.fromParamServer();
-  
-  iirob_filters::KalmanFilterParameters* temp_params_p;
-  if (param_namespace != "") 
-  { 
-    iirob_filters::KalmanFilterParameters temp_params{std::string(nh_.getNamespace() + "/" + param_namespace)}; 
-    temp_params.fromParamServer();
-    temp_params_p = &temp_params;
-  }
-    
+  std::vector<double> temp;
+  std::string full_namespace;
   if (param_namespace != "") 
   {
-    dt = temp_params_p->dt;
-    n = temp_params_p->n;
-    m = temp_params_p->m;
+    full_namespace = nh.getNamespace() + "/" + param_namespace;
+    iirob_filters::KalmanFilterParameters dynamic_params{full_namespace}; 
+    dynamic_params.fromParamServer();
+    if (!getParams(dynamic_params, full_namespace)) { return false; }
   }
   else 
   {
-    dt = params_.dt;
-    n = params_.n;
-    m = params_.m;
+    full_namespace = nh.getNamespace() + "/KalmanFilter";
+    iirob_filters::KalmanFilterParameters default_namespace_params{full_namespace};
+    default_namespace_params.fromParamServer();
+    if (!getParams(default_namespace_params, full_namespace)) { return false; }
   }
   
   I = Eigen::MatrixXd::Zero(n, n);
   I.setIdentity();
   
-  
-  std::vector<double> temp;
-  
-   if (param_namespace != "") 
-      temp = temp_params_p->A;
-    else 
-      temp = params_.A;
-  if (!fromStdVectorToEigenMatrix(temp, A, n, n, "State matrix")) { return false; }
-    
-    if (param_namespace != "") 
-      temp = temp_params_p->C;
-    else
-      temp = params_.C;
-  if (!fromStdVectorToEigenMatrix(temp, C, m, n, "Output matrix")) { return false; }
-  
-    if (param_namespace != "") 
-      temp = temp_params_p->Q;
-    else
-      temp = params_.Q;
-  if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; }
-  
-    if (param_namespace != "") 
-      temp = temp_params_p->R;
-    else
-      temp = params_.R;
-  if (!fromStdVectorToEigenMatrix(temp, R, m, m, "Measurement noise covariance")) { return false; }
-  
-    if (param_namespace != "") 
-      temp = temp_params_p->P;
-    else
-      temp = params_.P;
-  if (!fromStdVectorToEigenMatrix(temp, P0, n, n, "Estimate error covariance")) { return false; }
-  
-    if (param_namespace != "") 
-      temp = temp_params_p->x0;
-    else
-      temp = params_.x0;
-  if (!fromStdVectorToEigenVector(temp, x_hat, n, "Start state vector")) { return false; }
-  
   x_hat_new = Eigen::VectorXd::Zero(n);
   P = P0;
   
-  //gatingMatrix = Eigen::MatrixXd::Zero(m, m);
   gatingMatrix = C * P * C.transpose() + R;
   
   initialized = true;
   return true;
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameters& parameters, const std::string& param_namespace)
+{
+  std::vector<double> temp;
+  dt = parameters.dt;
+  n = parameters.n;
+  m = parameters.m;
+  if (dt == 0 || n == 0 || m == 0) 
+  {
+    ROS_ERROR("Kalman: dt, n or m is not valid! (dt = 0 or n = 0 or m = 0)"); return false;
+  }
+
+  temp = parameters.A;
+  if (!fromStdVectorToEigenMatrix(temp, A, n, n, "State matrix")) { return false; }
+  
+  
+  if(!ros::param::get(std::string(param_namespace + "/" + "At"), temp))
+  {
+    ROS_DEBUG("At is not available!"); 
+  }
+  else 
+  { 
+    if (!fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix")) { return false; }
+    isDynamicUpdate = true;
+  }
+  
+  temp = parameters.C;
+  if (!fromStdVectorToEigenMatrix(temp, C, m, n, "Output matrix")) { return false; }
+  temp = parameters.Q;
+  if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; }
+  
+  if(!ros::param::get(std::string(param_namespace + "/" + "Q_coeff"), temp))
+  {
+    ROS_DEBUG("Q_coeff is not available!"); 
+  }
+  else 
+  { 
+    if (!fromStdVectorToEigenMatrix(temp, Q_coeff, n, n, 
+      "Process noise covariance (coefficients of dynamic part of Q)")) { return false; } 
+  }
+  
+  if(!ros::param::get(std::string(param_namespace + "/" + "Q_exponent"), temp))
+  {
+    ROS_DEBUG("Q_exponent is not available!"); 
+  }
+  else 
+  { 
+    if (!fromStdVectorToEigenMatrix(temp, Q_exponent, n, n, 
+      "Process noise covariance (exponents of the time difference)")) { return false; } 
+  }
+  
+  if(!ros::param::get(std::string(param_namespace + "/" + "Q_variance"), temp))
+  {
+    ROS_DEBUG("Q_variance is not available!"); 
+  }
+  else 
+  { 
+    Q_variance = parameters.Q_variance;
+    can_update_Q_matrix = true;
+  }
+  
+  temp = parameters.R;
+  if (!fromStdVectorToEigenMatrix(temp, R, m, m, "Measurement noise covariance")) { return false; }
+  temp = parameters.P;
+  if (!fromStdVectorToEigenMatrix(temp, P0, n, n, "Estimate error covariance")) { return false; }
+  
+  if(!ros::param::get(std::string(param_namespace + "/" + "x0"), temp))
+  {
+    ROS_DEBUG("x0 is not available!"); 
+    x_hat = Eigen::VectorXd::Zero(n);
+  }
+  else 
+  { 
+    if (!fromStdVectorToEigenVector(temp, x_hat, n, "Start state vector")) { return false; }
+  }
 }
 
 template <typename T>
@@ -256,12 +318,10 @@ bool MultiChannelKalmanFilter<T>::predict(std::vector<T>& data_out)
   return true;
 }
 
-
 template <typename T>
 bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out)
 {
   if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
-  
   if(data_in.size() != m) { ROS_ERROR("Kalman: Not valid measurement vector!"); return false; }
   
   Eigen::VectorXd y(m);
@@ -285,7 +345,6 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
   return true;
 }
 
-
 template <typename T>
 bool MultiChannelKalmanFilter<T>::getGatingMatrix(Eigen::MatrixXd& data_out)
 {
@@ -295,13 +354,73 @@ bool MultiChannelKalmanFilter<T>::getGatingMatrix(Eigen::MatrixXd& data_out)
 }
 
 template <typename T>
-bool MultiChannelKalmanFilter<T>::getCovarianceMatrix(Eigen::MatrixXd& data_out)
+bool MultiChannelKalmanFilter<T>::getErrorCovarianceMatrix(Eigen::MatrixXd& data_out)
 {
   if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
   data_out = P;
   return true;
 }
 
+template <typename T>
+bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out, 
+					 const double& delta_t, bool update_Q_matrix)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  if(!isDynamicUpdate) { ROS_ERROR("Kalman: Dynamic update is not available!"); return false; }
+  if(data_in.size() != m) { ROS_ERROR("Kalman: Not valid measurement vector!"); return false; }
+
+  Eigen::VectorXd y(m);
+  for (int i = 0; i < m; ++i) { 
+    y(i) = data_in[i];	
+  }
+  
+  Eigen::MatrixXd A_t = At;
+  
+  for(int i = 0; i < n; i++){
+    for(int j = 0; j < n; j++){
+      if( A_t(i,j) ){
+           A_t(i,j) = pow( delta_t , A_t(i,j) )/fac( A_t(i,j) );
+      }
+    }
+  }
+
+  //update Q matrix if requested
+  Eigen::MatrixXd Q_updated = Q;
+  if (can_update_Q_matrix && update_Q_matrix)
+  {
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            // adds x*delta_t^y to entry in Q 
+            Q_updated(i,j) = Q(i,j) + Q_variance * Q_coeff(i,j)*pow(delta_t, Q_exponent(i,j));
+        }
+    }
+  }
+  
+  
+  x_hat_new = (A_t+A) * x_hat;
+  P = (A_t+A)*P*((A_t+A).transpose()) + Q_updated;
+  gatingMatrix = C * P * C.transpose() + R; 
+  K = P*C.transpose()*gatingMatrix.inverse(); // nxm
+  x_hat_new += K * (y - C*x_hat_new);
+  P = (I - K*C)*P; 
+  x_hat = x_hat_new;
+  
+  data_out.resize(n);
+  for (int i = 0; i < n; ++i) {
+    data_out[i] = x_hat(i);
+  }
+  return true;
+}
+
+template <typename T>
+bool MultiChannelKalmanFilter<T>::getCurrentState(std::vector<T>& data_out)
+{
+    data_out.resize(n);
+    for (int i = 0; i < n; ++i) {
+        data_out[i] = x_hat(i);
+    }
+    return true;    
+}
 
 template <typename T>
 bool MultiChannelKalmanFilter<T>::likelihood(const std::vector<T>& data_in, double& data_out)
@@ -314,38 +433,41 @@ bool MultiChannelKalmanFilter<T>::likelihood(const std::vector<T>& data_in, doub
   for (int i = 0; i < m; ++i) { 
     measurement(i) = data_in[i];	
   }
-//   std::cout << "measurement: \n" << measurement << std::endl;
   
   // convert prediction to measurement space
   Eigen::VectorXd prediction = C * A * x_hat;
-//   std::cout << "prediction: \n" << prediction << std::endl;
   
   // vector of prediction (origin = current state)
   Eigen::VectorXd continuousPrediction = prediction - C * x_hat;
-//   std::cout << "continuousPrediction: \n" << continuousPrediction << std::endl;
 
   // assumed interpolated prediction = current state + dt * prediction
   Eigen::VectorXd timeShiftedPrediction = ( C * x_hat ) + ( dt * continuousPrediction );
-//   std::cout << "timeShiftedPrediction: \n" << timeShiftedPrediction << std::endl;
   
   Eigen::VectorXd d = timeShiftedPrediction - measurement;
-//   std::cout << "d: \n" << d << std::endl;
   
-  
-//   std::cout << "gatingMatrix: \n" << gatingMatrix << std::endl;
-
   // calculate exponent
   const double e = -0.5 * d.transpose() * gatingMatrix.inverse() * d;
-//   std::cout << "e: \n" << e << std::endl;
 
   // get normal distribution value
   data_out = (1. / (std::pow(2. * M_PI, (double) m * .5)
 		  * std::sqrt(gatingMatrix.determinant()))) * std::exp(e);
-//   std::cout << "data_out: \n" << data_out << std::endl;
   
   return true;
 }
 
+template <typename T>
+bool MultiChannelKalmanFilter<T>::resetErrorCovAndState()
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  
+  for (int i = m; i < n; i++) 
+  {
+    x_hat(i) = 0.0;
+  }
+  P = P0;
+  return true;
+}
+
+
 }
 #endif
-
