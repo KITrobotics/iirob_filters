@@ -18,12 +18,10 @@ typedef iirob_filters::MultiChannelKalmanFilter<double> KalmanFilter;
 
 TEST(KalmanFilter, testFunctionality)
 {
-    ROS_ERROR("1");
   KalmanFilter* filter = new KalmanFilter();
   
   // configure default namespace: "KalmanFilter"
   EXPECT_TRUE(filter->configure());
-    ROS_ERROR("2");
   
   const int n = 1, m = 1;
   
@@ -41,47 +39,29 @@ TEST(KalmanFilter, testFunctionality)
   Eigen::MatrixXd error_cov_out;
   
   EXPECT_TRUE(filter->getErrorCovarianceMatrix(error_cov_out));
-    ROS_ERROR("3");
   EXPECT_TRUE(filter->getCurrentState(state_out));
-    ROS_ERROR("31");
+  
   
   for (int i = 0; i < measurements.size(); i++) 
   {
-    ROS_ERROR("4, %d", i);
     // configure and check every step  
     if (i != 0)
     {
       EXPECT_TRUE(filter->predict(state_out));
     }
-    ROS_ERROR("5, %d", i);
     
     EXPECT_TRUE(state_out.size() == 1);
-    ROS_ERROR("6, %d", i);
     EXPECT_NEAR (state_out[0], state_estimates[i], eps);
-    ROS_ERROR("7, %d", i);
     
     EXPECT_TRUE(filter->getErrorCovarianceMatrix(error_cov_out));
-    ROS_ERROR("8, %d", i);
-    EXPECT_TRUE(error_cov_out.size() == 1);
-    ROS_ERROR("9, %d", i);
     EXPECT_NEAR (error_cov_out(0, 0), error_cov_estimates[i], eps);
-    ROS_ERROR("10, %d", i);
     
     measurement.clear(); measurement.push_back(measurements[i]);
-    ROS_ERROR("11, %d", i);
     EXPECT_TRUE(filter->update(measurement, state_out));
-    ROS_ERROR("12, %d", i);
-    EXPECT_TRUE(state_out.size() == 1);
-    ROS_ERROR("13, %d", i);
     EXPECT_NEAR (state_out[0], state_updates[i], eps);
-    ROS_ERROR("14, %d", i);
     
     EXPECT_TRUE(filter->getErrorCovarianceMatrix(error_cov_out));
-    ROS_ERROR("15, %d", i);
-    EXPECT_TRUE(error_cov_out.size() == 1);
-    ROS_ERROR("16, %d", i);
     EXPECT_NEAR (error_cov_out(0, 0), error_cov_updates[i], eps);
-    ROS_ERROR("17, %d", i);
     
   }
 }
@@ -100,9 +80,7 @@ TEST(KalmanFilter, testParameters)
   
   for (int i = 0; i < namespaces_with_param_errors.size(); i++)  
   {
-    ROS_ERROR("18, %d", i);
     EXPECT_FALSE(filter->configure(namespaces_with_param_errors[i]));
-    ROS_ERROR("19, %d", i);
   }
 }
 

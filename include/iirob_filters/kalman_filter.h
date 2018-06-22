@@ -137,6 +137,7 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenMatrix(std::vector<double>
       ++it;
     }
   }
+  return true;
 }
 
 template <typename T>
@@ -153,6 +154,7 @@ bool MultiChannelKalmanFilter<T>::fromStdVectorToEigenVector(std::vector<double>
   {
     out(i) = in[i];
   }
+  return true;
 }
 
 template <typename T>
@@ -361,6 +363,8 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
     ROS_DEBUG("x0 is not available!"); 
     x_hat = Eigen::VectorXd::Zero(n);
   }
+  
+  return true;
 }
 
 template <typename T>
