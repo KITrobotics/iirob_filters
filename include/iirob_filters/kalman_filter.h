@@ -177,17 +177,17 @@ bool MultiChannelKalmanFilter<T>::configure() {
 template <typename T>
 bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) {
   std::vector<double> temp;
-  std::string full_namespace;
+  std::string full_namespace = nh.getNamespace() + "/";
   if (param_namespace != "") 
   {
-    full_namespace = nh.getNamespace() + "/" + param_namespace;
+    full_namespace += param_namespace;
     iirob_filters::KalmanFilterParameters dynamic_params{full_namespace}; 
     dynamic_params.fromParamServer();
     if (!getParams(dynamic_params, full_namespace)) { return false; }
   }
   else 
   {
-    full_namespace = nh.getNamespace() + "/KalmanFilter";
+    full_namespace += "KalmanFilter";
     iirob_filters::KalmanFilterParameters default_namespace_params{full_namespace};
     default_namespace_params.fromParamServer();
     if (!getParams(default_namespace_params, full_namespace)) { return false; }
@@ -208,77 +208,158 @@ bool MultiChannelKalmanFilter<T>::configure(const std::string& param_namespace) 
 template <typename T>
 bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameters& parameters, const std::string& param_namespace)
 {
-  std::vector<double> temp;
-  dt = parameters.dt;
-  n = parameters.n;
-  m = parameters.m;
-  if (dt == 0 || n == 0 || m == 0) 
+  if(ros::param::has(std::string(param_namespace + "/" + "dt")))
   {
-    ROS_ERROR("Kalman: dt, n or m is not valid! (dt = 0 or n = 0 or m = 0)"); return false;
-  }
-
-  temp = parameters.A;
-  if (!fromStdVectorToEigenMatrix(temp, A, n, n, "State matrix")) { return false; }
-  
-  
-  if(!ros::param::get(std::string(param_namespace + "/" + "At"), temp))
-  {
-    ROS_DEBUG("At is not available!"); 
+    dt = parameters.dt;
   }
   else 
   { 
+    ROS_ERROR("Kalman: dt is not available!");
+    return false;
+  }
+  
+  if(ros::param::has(std::string(param_namespace + "/" + "n")))
+  {
+    n = parameters.n;
+  }
+  else 
+  { 
+    ROS_ERROR("Kalman: n is not available!");
+    return false;
+  }
+  
+  if(ros::param::has(std::string(param_namespace + "/" + "m")))
+  {
+    m = parameters.m;
+  }
+  else 
+  { 
+    ROS_ERROR("Kalman: m is not available!");
+    return false;
+  }
+  
+  if (dt <= 0 || n <= 0 || m <= 0) 
+  {
+    ROS_ERROR("Kalman: dt, n or m is not valid! (dt <= 0 or n <= 0 or m <= 0)"); 
+    return false;
+  }
+  
+  std::vector<double> temp;
+  
+  if(ros::param::has(std::string(param_namespace + "/" + "A")))
+  {
+    temp = parameters.A;
+    if (!fromStdVectorToEigenMatrix(temp, A, n, n, "Dynamic part of state matrix")) { return false; }
+  }
+  else 
+  { 
+    ROS_ERROR("A is not available!"); 
+    return false;
+  }
+  
+  if(ros::param::has(std::string(param_namespace + "/" + "At")))
+  {
+    temp = parameters.At;
     if (!fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix")) { return false; }
     isDynamicUpdate = true;
   }
-  
-  temp = parameters.C;
-  if (!fromStdVectorToEigenMatrix(temp, C, m, n, "Output matrix")) { return false; }
-  temp = parameters.Q;
-  if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; }
-  
-  if(!ros::param::get(std::string(param_namespace + "/" + "Q_coeff"), temp))
+  else 
+  { 
+    ROS_DEBUG("At is not available!"); 
+  }
+
+  if(ros::param::has(std::string(param_namespace + "/" + "C")))
   {
-    ROS_DEBUG("Q_coeff is not available!"); 
+    temp = parameters.C;
+    if (!fromStdVectorToEigenMatrix(temp, C, m, n, "Output matrix")) { return false; }
   }
   else 
   { 
+    ROS_ERROR("C is not available!"); 
+    return false;
+  }
+
+  if(ros::param::has(std::string(param_namespace + "/" + "Q")))
+  {
+    temp = parameters.Q;
+    if (!fromStdVectorToEigenMatrix(temp, Q, n, n, "Process noise covariance")) { return false; }
+  }
+  else 
+  { 
+    ROS_ERROR("Q is not available!"); 
+    return false;
+  }
+  
+  bool skipDynamicPartQ = false;
+  if(isDynamicUpdate && ros::param::has(std::string(param_namespace + "/" + "Q_coeff")))
+  {
+    temp = parameters.Q_coeff;
     if (!fromStdVectorToEigenMatrix(temp, Q_coeff, n, n, 
       "Process noise covariance (coefficients of dynamic part of Q)")) { return false; } 
   }
-  
-  if(!ros::param::get(std::string(param_namespace + "/" + "Q_exponent"), temp))
-  {
-    ROS_DEBUG("Q_exponent is not available!"); 
-  }
   else 
   { 
+    ROS_DEBUG("Q_coeff is not available!"); 
+    skipDynamicPartQ = true;
+  }
+  
+  if(isDynamicUpdate && !skipDynamicPartQ && 
+    ros::param::has(std::string(param_namespace + "/" + "Q_exponent")))
+  {
+    temp = parameters.Q_exponent;
     if (!fromStdVectorToEigenMatrix(temp, Q_exponent, n, n, 
       "Process noise covariance (exponents of the time difference)")) { return false; } 
   }
-  
-  if(!ros::param::get(std::string(param_namespace + "/" + "Q_variance"), temp))
-  {
-    ROS_DEBUG("Q_variance is not available!"); 
-  }
   else 
   { 
+    ROS_DEBUG("Q_exponent is not available!"); 
+    skipDynamicPartQ = true;
+  }
+  
+  if(isDynamicUpdate && !skipDynamicPartQ && 
+    ros::param::has(std::string(param_namespace + "/" + "Q_variance")))
+  {
     Q_variance = parameters.Q_variance;
     can_update_Q_matrix = true;
   }
-  
-  temp = parameters.R;
-  if (!fromStdVectorToEigenMatrix(temp, R, m, m, "Measurement noise covariance")) { return false; }
-  temp = parameters.P;
-  if (!fromStdVectorToEigenMatrix(temp, P0, n, n, "Estimate error covariance")) { return false; }
-  
-  if(!ros::param::get(std::string(param_namespace + "/" + "x0"), temp))
+  else 
+  { 
+    ROS_DEBUG("Q_variance is not available!"); 
+  }
+
+  if(ros::param::has(std::string(param_namespace + "/" + "R")))
   {
-    ROS_DEBUG("x0 is not available!"); 
-    x_hat = Eigen::VectorXd::Zero(n);
+    temp = parameters.R;
+    if (!fromStdVectorToEigenMatrix(temp, R, m, m, "Measurement noise covariance")) { return false; }
   }
   else 
   { 
+    ROS_ERROR("R is not available!"); 
+    return false;
+  }
+  
+
+  if(ros::param::has(std::string(param_namespace + "/" + "P")))
+  {
+    temp = parameters.P;
+    if (!fromStdVectorToEigenMatrix(temp, P0, n, n, "Estimate error covariance")) { return false; }
+  }
+  else 
+  { 
+    ROS_ERROR("P is not available!"); 
+    return false;
+  }
+  
+  if(ros::param::has(std::string(param_namespace + "/" + "x0")))
+  {
+    temp = parameters.x0;
     if (!fromStdVectorToEigenVector(temp, x_hat, n, "Start state vector")) { return false; }
+    isDynamicUpdate = true;
+  }
+  else 
+  { 
+    ROS_DEBUG("x0 is not available!"); 
+    x_hat = Eigen::VectorXd::Zero(n);
   }
 }
 
