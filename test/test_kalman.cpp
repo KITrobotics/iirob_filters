@@ -1,12 +1,9 @@
-
 #include <iirob_filters/kalman_filter.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <Eigen/Dense>
 #include <ros/console.h>
 #include <log4cxx/logger.h>
-
-
 
 // Declare a test
 // TEST(TestSuite, testCase1)
@@ -67,7 +64,6 @@ TEST(KalmanFilter, testFunctionality)
     
   }
 }
-
   
 TEST(KalmanFilter, testParameters)
 {
@@ -78,7 +74,6 @@ TEST(KalmanFilter, testParameters)
     "KalmanFilterTestParameterA", "KalmanFilterTestParameterC", "KalmanFilterTestParameterQ",
     "KalmanFilterTestParameterR", "KalmanFilterTestParameterP", "KalmanFilterTestParameterX0"
   };
-  
   
   for (int i = 0; i < namespaces_with_param_errors.size(); i++)  
   {
