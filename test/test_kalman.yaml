@@ -21,7 +21,6 @@
   # if Q_coeff -> Q_exponent and Q_variance are not considered and 
   #     update of the Q matrix is not available
 
-
 # default namespace, parameters are set appropriate 
 KalmanFilter:
   dt: 0.01
@@ -94,7 +93,6 @@ KalmanFilterTestM:
   # n
   x0: [0]
   
-  
 KalmanFilterTestParameterA:
   dt: 0.01
   n: 1
@@ -129,7 +127,6 @@ KalmanFilterTestParameterC:
   # n
   x0: [0]
   
-   
 KalmanFilterTestParameterQ:
   dt: 0.01
   n: 1
@@ -147,7 +144,6 @@ KalmanFilterTestParameterQ:
   # n
   x0: [0]
   
-    
 KalmanFilterTestParameterR:
   dt: 0.01
   n: 1
@@ -165,7 +161,6 @@ KalmanFilterTestParameterR:
   # n
   x0: [0]
   
-    
 KalmanFilterTestParameterP:
   dt: 0.01
   n: 1
