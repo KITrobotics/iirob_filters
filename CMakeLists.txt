@@ -33,6 +33,7 @@ generate_ros_parameter_files(
     cfg/Threshold.params
     cfg/LowPassFilter.params
     cfg/GravityCompensation.params
+    cfg/KalmanFilter.params
     cfg/MovingMean.params
 )
 
@@ -58,8 +59,10 @@ add_library(${PROJECT_NAME}
   src/gravity_compensation.cpp
   src/low_pass_filter.cpp  
   src/threshold_filter.cpp
+  src/kalman_filter.cpp
   src/moving_mean_filter.cpp
   
+   include/${PROJECT_NAME}/kalman_filter.h 
    include/${PROJECT_NAME}/low_pass_filter.h
    include/${PROJECT_NAME}/gravity_compensation.h
    include/${PROJECT_NAME}/threshold_filter.h
@@ -106,3 +109,14 @@ install(FILES filters_plugin.xml
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_executable(kalman_test test/test_kalman.cpp)
+  target_link_libraries(kalman_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GTEST_LIBRARIES}) 
+  add_rostest(test/test_kalman.launch)
+
+  if(TARGET tests)
+    add_dependencies(tests kalman_test)
+  endif()
+endif()

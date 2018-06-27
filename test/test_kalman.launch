@@ -1,0 +1,5 @@
+<launch>	
+	<test test-name="kalman_test" pkg="iirob_filters" type="kalman_test">
+	  <rosparam command="load" file="$(find iirob_filters)/test/test_kalman.yaml"/>
+	</test>
+</launch>
