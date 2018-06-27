@@ -68,6 +68,15 @@ TEST(KalmanFilter, testFunctionality)
   }
 }
 
+TEST(KalmanFilter, testFunctionalityWithMoreDims)
+{
+  KalmanFilter* filter = new KalmanFilter();
+  
+  std::string namespace_ = "KalmanFilterMoreDimensions";
+  
+  EXPECT_TRUE(filter->configure(namespace_));
+}
+
   
 TEST(KalmanFilter, testParameters)
 {
