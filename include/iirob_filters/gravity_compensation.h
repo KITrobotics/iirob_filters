@@ -163,32 +163,43 @@ bool GravityCompensator<T>::update(const T & data_in, T& data_out)
   }
   
   geometry_msgs::Vector3Stamped temp_force_transformed, temp_torque_transformed, temp_vector_in, temp_vector_out;
+  geometry_msgs::WrenchStamped temp_wrench;
+    
+  tf2::doTransform(data_in, temp_wrench, transform_);
 
-  temp_vector_in.vector = data_in.wrench.force;
-  tf2::doTransform(temp_vector_in, temp_force_transformed, transform_);
+  //temp_vector_in.vector = data_in.wrench.force;
+  //tf2::doTransform(temp_vector_in, temp_force_transformed, transform_);
 
-  temp_vector_in.vector = data_in.wrench.torque;
-  tf2::doTransform(temp_vector_in, temp_torque_transformed, transform_);
+  //temp_vector_in.vector = data_in.wrench.torque;
+  //tf2::doTransform(temp_vector_in, temp_torque_transformed, transform_);
   
   // Transform CoG Vector
   geometry_msgs::Vector3Stamped cog_transformed;
   tf2::doTransform(cog_, cog_transformed, transform_);
   
     // Compensate for gravity force
-  temp_force_transformed.vector.z  += force_z_;
+  temp_wrench.wrench.force.z += force_z_;
+  //temp_force_transformed.vector.z  += force_z_;
   // Compensation Values for torque result from Crossprod of cog Vector and (0 0 G)
-  temp_torque_transformed.vector.x += (force_z_ * cog_transformed.vector.y);
-  temp_torque_transformed.vector.y -= (force_z_ * cog_transformed.vector.x);
+  //TODO: Are this x and y really OK?
+  temp_wrench.wrench.torque.x += (force_z_ * cog_transformed.vector.y);
+  temp_wrench.wrench.torque.y -= (force_z_ * cog_transformed.vector.x);
+  //temp_torque_transformed.vector.x += (force_z_ * cog_transformed.vector.y);
+  //temp_torque_transformed.vector.y -= (force_z_ * cog_transformed.vector.x);
 
   // Copy Message and Compensate values for Gravity Force and Resulting Torque
-  //geometry_msgs::WrenchStamped compensated_wrench;
-  data_out = data_in;
   
-  tf2::doTransform(temp_force_transformed, temp_vector_out, transform_back_);
-  data_out.wrench.force = temp_vector_out.vector;
+  //geometry_msgs::WrenchStamped compensated_wrench;
+  //data_out = data_in;
+    
+  tf2::doTransform(temp_wrench, data_out, transform_back_);
+  
+  //tf2::doTransform(temp_force_transformed, temp_vector_out, transform_back_);
+  //data_out.wrench.force = temp_vector_out.vector;
 
-  tf2::doTransform(temp_torque_transformed, temp_vector_out, transform_back_);
-  data_out.wrench.torque = temp_vector_out.vector;
+  //tf2::doTransform(temp_torque_transformed, temp_vector_out, transform_back_);
+  //data_out.wrench.torque = temp_vector_out.vector;
+  
   return true;
 }
 
