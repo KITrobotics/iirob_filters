@@ -18,6 +18,7 @@
   <url type="repository">https://github.com/KITrobotics/iirob_filters</url>
   <url type="bugtracker">https://github.com/KITrobotics/iirob_filtersissues</url>
 
+  <author email="denis.stogl@kit.edu">Denis Štogl</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   
