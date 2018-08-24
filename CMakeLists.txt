@@ -17,9 +17,11 @@ if(NOT EIGEN3_FOUND)
   # Fallback to cmake_modules
   find_package(cmake_modules REQUIRED)
   find_package(Eigen REQUIRED)
+  set(Eigen3_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS})
+  set(Eigen3_LIBRARIES ${Eigen_LIBRARIES})
 else()
-  set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
-  set(Eigen_LIBRARIES ${EIGEN3_LIBRARIES}) 
+  set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+  set(Eigen3_LIBRARIES ${EIGEN3_LIBRARIES}) 
 endif()
 
 include(CheckCXXCompilerFlag)
@@ -41,7 +43,7 @@ generate_ros_parameter_files(
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS eigen_conversions filters geometry_msgs roscpp rosparam_handler
-  DEPENDS Eigen
+  DEPENDS Eigen3
   LIBRARIES ${PROJECT_NAME}
 )
 
@@ -52,7 +54,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${Eigen_INCLUDE_DIRS}
+  ${Eigen3_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
@@ -74,7 +76,7 @@ add_dependencies(${PROJECT_NAME}
   ${PROJECT_NAME}_genparam  # For rosparam_handler
   )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 
 #############
 ## Install ##
