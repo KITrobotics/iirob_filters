@@ -2,8 +2,8 @@
 Changelog for package iirob_filters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.1 (2018-12-13)
+------------------
 * Update README.md (#25)
 * Update README.md (#23)
 * Use doTransform for Wrenches (#22)
