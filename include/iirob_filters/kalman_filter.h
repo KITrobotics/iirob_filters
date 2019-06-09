@@ -262,7 +262,11 @@ bool MultiChannelKalmanFilter<T>::getParams(iirob_filters::KalmanFilterParameter
   if(ros::param::has(std::string(param_namespace + "/" + "At")))
   {
     temp = parameters.At;
-    if (fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix"))
+    if (temp.size() == 0)
+    {
+      ROS_DEBUG("At is not used!");
+    }
+    else if (fromStdVectorToEigenMatrix(temp, At, n, n, "Dynamic part of state matrix"))
     {
       isDynamicUpdate = true; 
     }
