@@ -59,9 +59,10 @@ public:
   bool configure(const std::vector<T>& init_state_vector, const std::string param_namespace = "");
   bool configure(const std::string& param_namespace);
   virtual bool update(const std::vector<T>& data_in, std::vector<T>& data_out);
-  bool update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t, bool update_Q_matrix = false);
+  bool update(const std::vector<T>& data_in, std::vector<T>& data_out, const double& delta_t, bool update_Q_matrix = false, const Eigen::MatrixXd& R_loc = Eigen::MatrixXd::Zero(1,1));
   bool predict(std::vector<T>& data_out);
   bool computePrediction(std::vector<T>& data_out);
+  bool computePrediction(std::vector<T>& data_out, const double& delta_t);
   bool isInitializated(); 
   bool getCurrentState(std::vector<T>& data_out); 
   bool getErrorCovarianceMatrix(Eigen::MatrixXd& data_out);
@@ -399,6 +400,32 @@ bool MultiChannelKalmanFilter<T>::computePrediction(std::vector<T>& data_out)
 }
 
 template <typename T>
+bool MultiChannelKalmanFilter<T>::computePrediction(std::vector<T>& data_out, const double& delta_t)
+{
+  if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
+  
+  Eigen::MatrixXd A_t = At;
+  
+  for(int i = 0; i < n; i++){
+    for(int j = 0; j < n; j++){
+      if( A_t(i,j) ){
+           A_t(i,j) = pow( delta_t , A_t(i,j) )/fac( A_t(i,j) );
+      }
+    }
+  }
+
+  Eigen::VectorXd v = Eigen::VectorXd::Zero(n);
+  v = (A_t+A) * x_hat;
+  
+  data_out.resize(n);
+  for (int i = 0; i < data_out.size(); ++i) {
+    data_out[i] = v(i);
+  }
+  
+  return true;
+}
+
+template <typename T>
 bool MultiChannelKalmanFilter<T>::predict(std::vector<T>& data_out)
 {
   if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
@@ -459,7 +486,7 @@ bool MultiChannelKalmanFilter<T>::getErrorCovarianceMatrix(Eigen::MatrixXd& data
 
 template <typename T>
 bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vector<T>& data_out, 
-					 const double& delta_t, bool update_Q_matrix)
+					 const double& delta_t, bool update_Q_matrix, const Eigen::MatrixXd& R_loc)
 {
   if(!initialized) { ROS_ERROR("Kalman: Filter is not initialized!"); return false; }
   if(!isDynamicUpdate) { ROS_ERROR("Kalman: Dynamic update is not available!"); return false; }
@@ -491,11 +518,15 @@ bool MultiChannelKalmanFilter<T>::update(const std::vector<T>& data_in, std::vec
         }
     }
   }
+
+  Eigen::MatrixXd R_used = R;
+  if(!R_loc.isZero() && R_loc.cols() == R.cols() && R_loc.rows() == R.rows())
+    R_used = R_loc;
   
   
   x_hat_new = (A_t+A) * x_hat;
   P = (A_t+A)*P*((A_t+A).transpose()) + Q_updated;
-  gatingMatrix = C * P * C.transpose() + R; 
+  gatingMatrix = C * P * C.transpose() + R_used; 
   K = P*C.transpose()*gatingMatrix.inverse(); // nxm
   x_hat_new += K * (y - C*x_hat_new);
   P = (I - K*C)*P; 
