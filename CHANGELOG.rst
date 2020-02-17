@@ -2,8 +2,8 @@
 Changelog for package iirob_filters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.2 (2020-02-17)
+------------------
 * Added chages to sequential Kalman Filter (`#30 <https://github.com/KITrobotics/iirob_filters/issues/30>`_)
 * added handling if At is empty (`#29 <https://github.com/KITrobotics/iirob_filters/issues/29>`_)
 * version 0.8.1
