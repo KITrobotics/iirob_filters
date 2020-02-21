@@ -60,9 +60,6 @@ public:
         virtual bool update(const T & data_in, T& data_out);
 
 private:
-
-        ros::NodeHandle nh_;
-        
         // Parameters
         iirob_filters::MovingMeanParameters params_;
         int divider_;
@@ -73,7 +70,7 @@ private:
 };
     
 template <typename T>
-MovingMeanFilter<T>::MovingMeanFilter():params_{nh_.getNamespace()+"/MovingMeanFilter/params"}
+MovingMeanFilter<T>::MovingMeanFilter():params_{ros::NodeHandle("~/MovingMeanFilter/params").getNamespace()}
 {
 }
 

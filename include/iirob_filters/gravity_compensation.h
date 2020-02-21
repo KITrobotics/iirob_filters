@@ -78,7 +78,6 @@ public:
     virtual bool update( const T & data_in, T& data_out);
 
 private:
-    ros::NodeHandle nh_;
     iirob_filters::GravityCompensationParameters params_;
 
     // Storage for Calibration Values
@@ -102,7 +101,7 @@ private:
 };
 
 template <typename T>
-GravityCompensator<T>::GravityCompensator(): params_{nh_.getNamespace()+"/GravityCompensation/params"}
+GravityCompensator<T>::GravityCompensator(): params_{ros::NodeHandle("~/GravityCompensation/params").getNamespace()}
 {
     reconfigCalibrationSrv_.setCallback(boost::bind(&GravityCompensator<T>::reconfigureConfigurationRequest, this, _1, _2));
 }

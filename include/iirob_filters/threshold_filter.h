@@ -61,7 +61,6 @@ public:
         virtual bool update(const T & data_in, T& data_out);
     
     private:
-        ros::NodeHandle nh_;
         iirob_filters::ThresholdParameters params_;
         double threshold_;
         double threshold_lin_;
@@ -74,7 +73,7 @@ public:
 };
 
 template <typename T>
-ThresholdFilter<T>::ThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
+ThresholdFilter<T>::ThresholdFilter(): params_{ros::NodeHandle("~/ThresholdFilter/params").getNamespace()}
 {
     reconfigCalibrationSrv_.setCallback(boost::bind(&ThresholdFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
@@ -198,8 +197,6 @@ public:
 private:
 
     //ROS Objects
-    ros::NodeHandle nh_;
-
     iirob_filters::ThresholdParameters params_;
     double threshold_;
     double threshold_lin_;
@@ -209,7 +206,7 @@ private:
 };
 
 template <typename T>
-MultiChannelThresholdFilter<T>::MultiChannelThresholdFilter(): params_{nh_.getNamespace()+"/ThresholdFilter/params"}
+MultiChannelThresholdFilter<T>::MultiChannelThresholdFilter(): params_{ros::NodeHandle("~/ThresholdFilter/params").getNamespace()}
 {
 }
 

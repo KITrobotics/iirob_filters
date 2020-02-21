@@ -63,9 +63,6 @@ public:
         virtual bool update(const T& data_in, T& data_out);
         
 private:
-
-        ros::NodeHandle nh_;
-
         // Parameters
         double sampling_frequency_;
         double damping_frequency_;
@@ -73,7 +70,7 @@ private:
         int divider_;
         std::map<std::string,std::string> map_param_;
 
-        // Filter parametrs
+        // Filter parameters
         double b1;
         double a1;
         int divider_counter;
@@ -88,7 +85,7 @@ private:
 
 
 template <typename T>
-LowPassFilter<T>::LowPassFilter():params_{nh_.getNamespace()+"/LowPassFilter/params"}
+LowPassFilter<T>::LowPassFilter():params_{ros::NodeHandle("~/LowPassFilter/params").getNamespace()}
 {
     reconfigCalibrationSrv_.setCallback(boost::bind(&LowPassFilter<T>::reconfigureConfigurationRequest, this, _1, _2));
 }
@@ -198,8 +195,6 @@ public:
   
 protected:
   
-  ros::NodeHandle nh_;
-  
   double sampling_frequency_;
   double damping_frequency_;
   double damping_intensity_;
@@ -218,7 +213,7 @@ protected:
 
 
 template <typename T>
-MultiChannelLowPassFilter<T>::MultiChannelLowPassFilter():params_{nh_.getNamespace()+"/LowPassFilter/params"}
+MultiChannelLowPassFilter<T>::MultiChannelLowPassFilter():params_{ros::NodeHandle("~/LowPassFilter/params").getNamespace()}
 {
 }
 
