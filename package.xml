@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>iirob_filters</name>
-  <version>0.8.4</version>
+  <version>0.9.0</version>
   <description>The iirob_filters package implements following filters:
       1) Low-Pass
       2) Moving Mean
