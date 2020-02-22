@@ -2,8 +2,8 @@
 Changelog for package iirob_filters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.1 (2020-02-22)
+------------------
 * Repository changes
 
 0.9.0 (2020-02-22)
