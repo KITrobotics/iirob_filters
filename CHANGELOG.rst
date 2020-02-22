@@ -2,6 +2,14 @@
 Changelog for package iirob_filters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add melodic travis build (`#31 <https://github.com/KITrobotics/iirob_filters/issues/31>`_)
+  * Add melodic travis build to kinetic-branch
+  * Removed support for indigo
+* Use local namespace for parameters
+* Contributors: Denis Štogl
+
 0.8.2 (2020-02-17)
 ------------------
 * Added chages to sequential Kalman Filter (`#30 <https://github.com/KITrobotics/iirob_filters/issues/30>`_)
