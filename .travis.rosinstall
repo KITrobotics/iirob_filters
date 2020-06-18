@@ -1,4 +1,0 @@
-- git:
-  - uri: https://github.com/cbandera/rosparam_handler.git
-  - name: rosparam_handler
-  - version: develop
