@@ -2,6 +2,11 @@
 Changelog for package iirob_filters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add ros_geometry_msgs dependency for build
+* Use GitHub actions as CI
+
 0.9.1 (2020-02-22)
 ------------------
 * Repository changes
