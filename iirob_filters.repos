@@ -1,0 +1,9 @@
+repositories:
+  rosparam_shortcuts:
+    type: git
+    url: https://github.com/PickNikRobotics/rosparam_shortcuts.git
+    version: ros2
+  filters:
+    type: git
+    url: https://github.com/bostoncleek/filters.git
+    version: pr_ros2_fixes

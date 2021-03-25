@@ -36,102 +36,101 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
+ *****************************************************************************/
 
 #ifndef IIROB_FILTERS_MOVING_MEAN_FILTER_H
 #define IIROB_FILTERS_MOVING_MEAN_FILTER_H
 
-#include <ros/ros.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <iirob_filters/MovingMeanParameters.h>
-#include <filters/filter_base.h>
-#include <math.h>
-namespace iirob_filters{
-    
-template <typename T>
-class MovingMeanFilter: public filters::FilterBase<T>
+// #include <ros/ros.h>
+// #include <geometry_msgs/WrenchStamped.h>
+// #include <iirob_filters/MovingMeanParameters.h>
+// #include <filters/filter_base.h>
+// #include <math.h>
+
+namespace iirob_filters
 {
-public:
+// template <typename T>
+// class MovingMeanFilter: public filters::FilterBase<T>
+// {
+// public:
 
-        MovingMeanFilter();
-        ~MovingMeanFilter();
+//         MovingMeanFilter();
+//         ~MovingMeanFilter();
 
-        virtual bool configure();
-        virtual bool update(const T & data_in, T& data_out);
+//         virtual bool configure();
+//         virtual bool update(const T & data_in, T& data_out);
 
-private:
-        // Parameters
-        iirob_filters::MovingMeanParameters params_;
-        int divider_;
+// private:
+//         // Parameters
+//         iirob_filters::MovingMeanParameters params_;
+//         int divider_;
 
-        // Filter parametrs
-        int divider_counter;
-        std::vector<T> values;
-};
-    
-template <typename T>
-MovingMeanFilter<T>::MovingMeanFilter():params_{ros::NodeHandle("~/MovingMeanFilter/params").getNamespace()}
-{
-}
+//         // Filter parametrs
+//         int divider_counter;
+//         std::vector<T> values;
+// };
 
-template <typename T>
-MovingMeanFilter<T>::~MovingMeanFilter()
-{
-}
+// template <typename T>
+// MovingMeanFilter<T>::MovingMeanFilter():params_{ros::NodeHandle("~/MovingMeanFilter/params").getNamespace()}
+// {
+// }
 
-template <typename T>
-bool MovingMeanFilter<T>::configure()
-{
-    params_.fromParamServer();
-    divider_ = params_.divider;
+// template <typename T>
+// MovingMeanFilter<T>::~MovingMeanFilter()
+// {
+// }
 
-    ROS_INFO("Moving Mean Filter Params: Divider: %d " , divider_);
+// template <typename T>
+// bool MovingMeanFilter<T>::configure()
+// {
+//     params_.fromParamServer();
+//     divider_ = params_.divider;
 
-    if(divider_ == 0)
-        ROS_ERROR("MovingMeanFilter did not find param divider");
-    return true;
-}
+//     ROS_INFO("Moving Mean Filter Params: Divider: %d " , divider_);
 
-template <typename T>
-bool MovingMeanFilter<T>::update(const T & data_in, T& data_out)
-{
-  if (values.size() < divider_) {
-    values.push_back(data_in);
-    data_out = data_in;
-    return true;
-  }
+//     if(divider_ == 0)
+//         ROS_ERROR("MovingMeanFilter did not find param divider");
+//     return true;
+// }
 
-  values.erase(values.begin());
-  values.push_back(data_in);
+// template <typename T>
+// bool MovingMeanFilter<T>::update(const T & data_in, T& data_out)
+// {
+//   if (values.size() < divider_) {
+//     values.push_back(data_in);
+//     data_out = data_in;
+//     return true;
+//   }
 
-  T sum;
-  sum.wrench.force.x = 0.0;
-  sum.wrench.force.y = 0.0;
-  sum.wrench.force.z = 0.0;
-  sum.wrench.torque.x = 0.0;
-  sum.wrench.torque.y = 0.0;
-  sum.wrench.torque.x = 0.0;  
-  for(int i =0 ; i<values.size(); ++i) 
-  {
-    sum.wrench.force.x += values[i].wrench.force.x;
-    sum.wrench.force.y += values[i].wrench.force.y;
-    sum.wrench.force.z += values[i].wrench.force.z;
-    sum.wrench.torque.x += values[i].wrench.torque.x;
-    sum.wrench.torque.y += values[i].wrench.torque.y;
-    sum.wrench.torque.z += values[i].wrench.torque.z;
-    
-  }
-  data_out.wrench.force.x = sum.wrench.force.x / values.size();
-  data_out.wrench.force.y = sum.wrench.force.y / values.size();
-  data_out.wrench.force.z = sum.wrench.force.z / values.size();
-  data_out.wrench.torque.x = sum.wrench.torque.x / values.size();
-  data_out.wrench.torque.y = sum.wrench.torque.y / values.size();
-  data_out.wrench.torque.z = sum.wrench.torque.z / values.size();
-  
-  return true;
-};
-}
+//   values.erase(values.begin());
+//   values.push_back(data_in);
+
+//   T sum;
+//   sum.wrench.force.x = 0.0;
+//   sum.wrench.force.y = 0.0;
+//   sum.wrench.force.z = 0.0;
+//   sum.wrench.torque.x = 0.0;
+//   sum.wrench.torque.y = 0.0;
+//   sum.wrench.torque.x = 0.0;
+//   for(int i =0 ; i<values.size(); ++i)
+//   {
+//     sum.wrench.force.x += values[i].wrench.force.x;
+//     sum.wrench.force.y += values[i].wrench.force.y;
+//     sum.wrench.force.z += values[i].wrench.force.z;
+//     sum.wrench.torque.x += values[i].wrench.torque.x;
+//     sum.wrench.torque.y += values[i].wrench.torque.y;
+//     sum.wrench.torque.z += values[i].wrench.torque.z;
+
+//   }
+//   data_out.wrench.force.x = sum.wrench.force.x / values.size();
+//   data_out.wrench.force.y = sum.wrench.force.y / values.size();
+//   data_out.wrench.force.z = sum.wrench.force.z / values.size();
+//   data_out.wrench.torque.x = sum.wrench.torque.x / values.size();
+//   data_out.wrench.torque.y = sum.wrench.torque.y / values.size();
+//   data_out.wrench.torque.z = sum.wrench.torque.z / values.size();
+
+//   return true;
+// };
+}  // namespace iirob_filters
 
 #endif
-
- 
