@@ -2,8 +2,13 @@ iirob_filters
 =============
 
 ## ROS Distro Support
-* Kinetic
-* Melodic
+- ROS2 Foxy
 
-[![Build Status](https://github.com/KITrobotics/iirob_filters/workflows/Test%20iirob_filters/badge.svg?branch=melodic)](https://github.com/KITrobotics/iirob_filters/actions?query=branch%3Amelodic)
-[![Licence](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+## ROS2 Port
+Only the gravity compensator and low pass filter have been ported. Both utilize dynamic parameters and require the parameters to be set before the function `configure()` is called.
+
+## Tests
+Run the current tests:
+```
+colcon test --packages-select iirob_filters --event-handlers console_direct+
+```

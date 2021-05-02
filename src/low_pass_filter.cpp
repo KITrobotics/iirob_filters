@@ -36,10 +36,11 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
-#include <pluginlib/class_list_macros.h>
+ *****************************************************************************/
+#include <pluginlib/class_list_macros.hpp>
 #include <iirob_filters/low_pass_filter.h>
 
-PLUGINLIB_EXPORT_CLASS(iirob_filters::LowPassFilter<geometry_msgs::WrenchStamped>, filters::FilterBase<geometry_msgs::WrenchStamped>)
+PLUGINLIB_EXPORT_CLASS(iirob_filters::LowPassFilter<geometry_msgs::msg::WrenchStamped>,
+                       filters::FilterBase<geometry_msgs::msg::WrenchStamped>)
 PLUGINLIB_EXPORT_CLASS(iirob_filters::LowPassFilter<double>, filters::FilterBase<double>)
-PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelLowPassFilter<double>, filters::MultiChannelFilterBase<double>)
+// PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelLowPassFilter<double>, filters::MultiChannelFilterBase<double>)

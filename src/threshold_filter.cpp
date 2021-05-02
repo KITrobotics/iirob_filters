@@ -37,10 +37,11 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this package. If not, see <http://www.gnu.org/licenses/>.
-*****************************************************************************/
+ *****************************************************************************/
 #include <pluginlib/class_list_macros.h>
 #include <iirob_filters/threshold_filter.h>
 
-PLUGINLIB_EXPORT_CLASS(iirob_filters::ThresholdFilter<geometry_msgs::WrenchStamped>, filters::FilterBase<geometry_msgs::WrenchStamped>)
+PLUGINLIB_EXPORT_CLASS(iirob_filters::ThresholdFilter<geometry_msgs::WrenchStamped>,
+                       filters::FilterBase<geometry_msgs::WrenchStamped>)
 PLUGINLIB_EXPORT_CLASS(iirob_filters::ThresholdFilter<double>, filters::FilterBase<double>)
 PLUGINLIB_EXPORT_CLASS(iirob_filters::MultiChannelThresholdFilter<double>, filters::MultiChannelFilterBase<double>)
