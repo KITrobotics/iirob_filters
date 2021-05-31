@@ -61,6 +61,8 @@ public:
 
   virtual bool configure();
 
+  bool configure(const std::string& ns);
+
   virtual bool update(const T& data_in, T& data_out);
 
   /** \brief Get most recent parameters */
@@ -75,6 +77,7 @@ private:
   rclcpp::Logger logger_;
 
   // Parameters
+  std::string parameter_namespace_;
   double sampling_frequency_;
   double damping_frequency_;
   double damping_intensity_;
@@ -114,6 +117,13 @@ void LowPassFilter<T>::setNode(const rclcpp::Node::SharedPtr& node)
 template <typename T>
 bool LowPassFilter<T>::configure()
 {
+  configure("");
+  return true;
+}
+
+template <typename T>
+bool LowPassFilter<T>::configure(const std::string& ns)
+{
   if (!initialized_)
   {
     RCLCPP_INFO(logger_, "Node is not initialized... call setNode()");
@@ -122,10 +132,14 @@ bool LowPassFilter<T>::configure()
 
   params_.reset(new rosparam_shortcuts::NodeParameters(node_, logger_));
 
-  params_->declareAndGet("sampling_frequency", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  params_->declareAndGet("damping_frequency", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  params_->declareAndGet("damping_intensity", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  params_->declareAndGet("divider", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
+  parameter_namespace_ = ns;
+  params_->declareAndGet(parameter_namespace_ + "sampling_frequency", rclcpp::ParameterValue(),
+                         rosparam_shortcuts::always_accept);
+  params_->declareAndGet(parameter_namespace_ + "damping_frequency", rclcpp::ParameterValue(),
+                         rosparam_shortcuts::always_accept);
+  params_->declareAndGet(parameter_namespace_ + "damping_intensity", rclcpp::ParameterValue(),
+                         rosparam_shortcuts::always_accept);
+  params_->declareAndGet(parameter_namespace_ + "divider", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
 
   updateParameters();
   configured_ = true;
@@ -210,10 +224,10 @@ void LowPassFilter<T>::updateParameters()
 {
   params_updated_ = false;
 
-  sampling_frequency_ = params_->get("sampling_frequency").as_double();
-  damping_frequency_ = params_->get("damping_frequency").as_double();
-  damping_intensity_ = params_->get("damping_intensity").as_double();
-  divider_ = params_->get("divider").as_int();
+  sampling_frequency_ = params_->get(parameter_namespace_ + "sampling_frequency").as_double();
+  damping_frequency_ = params_->get(parameter_namespace_ + "damping_frequency").as_double();
+  damping_intensity_ = params_->get(parameter_namespace_ + "damping_intensity").as_double();
+  divider_ = params_->get(parameter_namespace_ + "divider").as_int();
 
   a1 = exp(-1.0 / sampling_frequency_ * (2.0 * M_PI * damping_frequency_) / (pow(10.0, damping_intensity_ / -10.0)));
   b1 = 1.0 - a1;

@@ -83,7 +83,7 @@ TEST_F(LowPassFilterFixture, TestLowPassFilter)
   node_->declare_parameter("damping_intensity", 1.0);
   node_->declare_parameter("divider", 1);
 
-  ASSERT_TRUE(low_pass_filter_.configure());
+  ASSERT_TRUE(low_pass_filter_.configure(""));
 
   geometry_msgs::msg::WrenchStamped in, out;
   in.header.frame_id = "world";
