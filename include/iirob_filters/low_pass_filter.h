@@ -59,6 +59,7 @@ public:
   /** @brief Init node  */
   void setNode(const rclcpp::Node::SharedPtr& node);
 
+  /** @brief Configure filter parameters  */
   virtual bool configure();
 
   bool configure(const std::string& ns);
