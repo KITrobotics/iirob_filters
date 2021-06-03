@@ -26,6 +26,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rosparam_shortcuts
   tf2_geometry_msgs
   tf2_ros
+  pluginlib
 )
 
 add_library(low_pass_filter SHARED
@@ -58,7 +59,6 @@ target_compile_options(gravity_compensation PRIVATE -Wall -Wextra)
 # Install Libraries
 install(
   TARGETS low_pass_filter gravity_compensation
-  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -75,7 +75,7 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_libraries(gravity_compensation low_pass_filter)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 if(BUILD_TESTING)
@@ -92,5 +92,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_low_pass_filter low_pass_filter)
 
 endif()
+
+# Install pluginlib xml
+pluginlib_export_plugin_description_file(iirob_filters filters_plugin.xml)
 
 ament_package()
