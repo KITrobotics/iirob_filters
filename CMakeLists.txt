@@ -39,8 +39,6 @@ target_include_directories(low_pass_filter PUBLIC
 )
 
 ament_target_dependencies(low_pass_filter ${THIS_PACKAGE_INCLUDE_DEPENDS})
-target_compile_options(low_pass_filter PRIVATE -Wall -Wextra)
-
 
 add_library(gravity_compensation SHARED
   src/gravity_compensation.cpp
@@ -52,7 +50,6 @@ target_include_directories(gravity_compensation PUBLIC
 )
 
 ament_target_dependencies(gravity_compensation ${THIS_PACKAGE_INCLUDE_DEPENDS})
-target_compile_options(gravity_compensation PRIVATE -Wall -Wextra)
 
 # TODO(sjahr) enable threshold_filter, kalman_filter, moving_mean_filter
 
@@ -94,6 +91,6 @@ if(BUILD_TESTING)
 endif()
 
 # Install pluginlib xml
-pluginlib_export_plugin_description_file(iirob_filters filters_plugin.xml)
+pluginlib_export_plugin_description_file(filters filters_plugin.xml)
 
 ament_package()
