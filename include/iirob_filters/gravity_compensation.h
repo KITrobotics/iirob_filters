@@ -50,7 +50,6 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Transform.h>
 #include <filters/filter_base.hpp>
-//#include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 namespace iirob_filters
 {
@@ -63,9 +62,6 @@ public:
 
   /** \brief Destructor */
   ~GravityCompensator();
-
-  /** @brief Init node  */
-  //void setNode(const rclcpp::Node::SharedPtr& node);
 
   /** @brief Configure filter parameters  */
   virtual bool configure() override;
@@ -80,9 +76,6 @@ public:
   bool updateParameters();
 
 private:
-  /** \brief Dynamic parameter callback activated when parameters change */
-//  void parameterCallback();
-
   rclcpp::Node::SharedPtr node_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
@@ -100,10 +93,6 @@ private:
   std::unique_ptr<tf2_ros::TransformListener> p_tf_Listener_;
   geometry_msgs::msg::TransformStamped transform_, transform_back_, transform_cog_;
 
-  // dynamic parameters TODO(sjahr) reenable
-//  std::unique_ptr<rosparam_shortcuts::NodeParameters> params_;
-//  bool params_updated_;
-//  bool initialized_;
   bool configured_;
 
   uint num_transform_errors_;
@@ -112,8 +101,6 @@ private:
 template <typename T>
 GravityCompensator<T>::GravityCompensator()
   : logger_(rclcpp::get_logger("GravityCompensator"))
-//  , params_updated_(false)
-//  , initialized_(false)
   , configured_(false)
   , num_transform_errors_(0)
 {
@@ -124,39 +111,12 @@ GravityCompensator<T>::~GravityCompensator()
 {
 }
 
-//template <typename T>
-//void GravityCompensator<T>::setNode(const rclcpp::Node::SharedPtr& node)
-//{
-//  node_ = node;
-//  initialized_ = true;
-//}
-
 template <typename T>
 bool GravityCompensator<T>::configure()
 {
-  //if (!initialized_)
-  //{
-  //  RCLCPP_INFO(logger_, "Node is not initialized... call setNode()");
-  //  return false;
-  //}
-
-  //p_tf_Buffer_.reset(new tf2_ros::Buffer(node_->get_clock()));
-  //clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
-
   clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
   p_tf_Buffer_.reset(new tf2_ros::Buffer(clock_));
   p_tf_Listener_.reset(new tf2_ros::TransformListener(*p_tf_Buffer_.get(), true));
-  //params_.reset(new rosparam_shortcuts::NodeParameters(node_, logger_));
-
-  //params_->declareAndGet("world_frame", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  //params_->declareAndGet("sensor_frame", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  //params_->declareAndGet("CoG_x", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  //params_->declareAndGet("CoG_y", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  //params_->declareAndGet("CoG_z", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-  //params_->declareAndGet("force", rclcpp::ParameterValue(), rosparam_shortcuts::always_accept);
-
-  //params_->registerRosCallbackReconfigure();
-  //params_->registerUpdateCallback([this]() { parameterCallback(); });
 
   if(!updateParameters()){
     return false;
@@ -180,11 +140,6 @@ bool GravityCompensator<T>::update(const T& data_in, T& data_out)
     RCLCPP_ERROR(logger_, "Filter is not configured");
     return false;
   }
-
-  //if (params_updated_)
-  //{
-  //  updateParameters();
-  //}
 
   try
   {
@@ -221,7 +176,6 @@ bool GravityCompensator<T>::update(const T& data_in, T& data_out)
   temp_torque_transformed.vector.y -= (force_z_ * cog_transformed.vector.x);
 
   // Copy Message and Compensate values for Gravity Force and Resulting Torque
-  // geometry_msgs::WrenchStamped compensated_wrench;
   data_out = data_in;
 
   tf2::doTransform(temp_force_transformed, temp_vector_out, transform_back_);
@@ -236,8 +190,6 @@ bool GravityCompensator<T>::update(const T& data_in, T& data_out)
 template <typename T>
 bool GravityCompensator<T>::updateParameters()
 {
-  //params_updated_ = false;
-
   if (!filters::FilterBase<T>::getParam("world_frame", world_frame_)) {
     RCLCPP_ERROR(
       this->logging_interface_->get_logger(),
@@ -281,19 +233,6 @@ bool GravityCompensator<T>::updateParameters()
     return false;
   }
   return true;
-  //world_frame_ = params_->get("world_frame").as_string();
-  //sensor_frame_ = params_->get("sensor_frame").as_string();
-  //cog_.vector.x = params_->get("CoG_x").as_double();
-  //cog_.vector.y = params_->get("CoG_y").as_double();
-  //cog_.vector.z = params_->get("CoG_z").as_double();
-  //force_z_ = params_->get("force").as_double();
 }
-
-//template <typename T>
-//void GravityCompensator<T>::parameterCallback()
-//{
-//  params_updated_ = true;
-//}
-
 }  // namespace iirob_filters
 #endif

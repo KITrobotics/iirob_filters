@@ -5,8 +5,7 @@ iirob_filters
 - ROS2 Foxy
 
 ## ROS2 Port
-Only the gravity compensator and low pass filter have been ported. Both utilize dynamic parameters and require the parameters to be set before the function `configure()` is called.
-
+Only the gravity compensator has been ported.
 ## Tests
 Run the current tests:
 ```

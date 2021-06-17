@@ -54,7 +54,7 @@ target_include_directories(gravity_compensation PUBLIC
 ament_target_dependencies(gravity_compensation ${THIS_PACKAGE_INCLUDE_DEPENDS})
 target_compile_options(gravity_compensation PRIVATE -Wall -Wextra)
 
-# TODO(sjahr) enable threshold_filter, kalman_filter, moving_mean_filter
+# TODO(sjahr) Re-enable low_pass_filter, threshold_filter, kalman_filter, moving_mean_filter
 
 # Install Libraries
 install(
