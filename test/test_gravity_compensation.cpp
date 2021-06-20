@@ -46,8 +46,6 @@ class GravityCompensatorFixture : public ::testing::Test
 public:
   void SetUp() override
   {
-    gravity_compensator_.setNode(node_);
-
     executor_->add_node(node_);
     executor_thread_ = std::thread([this]() { executor_->spin(); });
   }

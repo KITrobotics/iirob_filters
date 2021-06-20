@@ -37,7 +37,7 @@
 
     <export>
       <build_type>ament_cmake</build_type>
-      <filters plugin="${prefix}/filters_plugin.xml"/>
+      <iirob_filters plugin="filters_plugin.xml"/>
     </export>
 
   </package>
