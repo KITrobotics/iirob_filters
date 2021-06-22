@@ -94,15 +94,12 @@ private:
   geometry_msgs::msg::TransformStamped transform_, transform_back_, transform_cog_;
 
   bool configured_;
-
-  uint num_transform_errors_;
 };
 
 template <typename T>
 GravityCompensator<T>::GravityCompensator()
   : logger_(rclcpp::get_logger("GravityCompensator"))
   , configured_(false)
-  , num_transform_errors_(0)
 {
 }
 
@@ -146,15 +143,10 @@ bool GravityCompensator<T>::update(const T& data_in, T& data_out)
     transform_ = p_tf_Buffer_->lookupTransform(world_frame_, data_in.header.frame_id, rclcpp::Time());
     transform_back_ = p_tf_Buffer_->lookupTransform(data_in.header.frame_id, world_frame_, rclcpp::Time());
     transform_cog_ = p_tf_Buffer_->lookupTransform(world_frame_,  force_frame_, rclcpp::Time());
-    num_transform_errors_ = 0;
   }
   catch (const tf2::TransformException& ex)
   {
-    if (num_transform_errors_ % 100 == 0)
-    {
-      RCLCPP_ERROR(logger_, "%s", ex.what());
-    }
-    num_transform_errors_++;
+      RCLCPP_ERROR_SKIPFIRST_THROTTLE(logger_, *clock_, 5000, "%s", ex.what());
   }
 
   geometry_msgs::msg::Vector3Stamped temp_force_transformed, temp_torque_transformed, temp_vector_in, temp_vector_out;
