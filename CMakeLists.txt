@@ -94,6 +94,6 @@ if(BUILD_TESTING)
 endif()
 
 # Install pluginlib xml
-pluginlib_export_plugin_description_file(iirob_filters filters_plugin.xml)
+pluginlib_export_plugin_description_file(filters filters_plugin.xml)
 
 ament_package()
