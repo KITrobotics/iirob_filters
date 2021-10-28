@@ -8,6 +8,7 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(ament_cmake REQUIRED)
+find_package(controller_interface REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(filters REQUIRED)
@@ -19,14 +20,15 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
+  controller_interface
   Eigen3
   filters
   geometry_msgs
+  pluginlib
   rclcpp
   rosparam_shortcuts
   tf2_geometry_msgs
   tf2_ros
-  pluginlib
 )
 
 add_library(low_pass_filter SHARED

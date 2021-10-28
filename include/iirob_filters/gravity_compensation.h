@@ -52,8 +52,97 @@
 #include <tf2/LinearMath/Transform.h>
 #include <filters/filter_base.hpp>
 
+#include "controller_interface/controller_parameters.hpp"
+
 namespace iirob_filters
 {
+class GravityCompensatorParameters : public controller_interface::ControllerParameters
+{
+public:
+  GravityCompensatorParameters(const std::string & params_prefix) :
+   controller_interface::ControllerParameters(params_prefix, 0, 4, 3)
+  {
+    add_string_parameter("world_frame", false);
+    add_string_parameter("sensor_frame", false);
+    add_string_parameter("force_frame", false);
+
+    add_double_parameter("CoG_x", true);
+    add_double_parameter("CoG_y", true);
+    add_double_parameter("CoG_z", true);
+    add_double_parameter("force", true);
+  }
+
+  bool check_if_parameters_are_valid() override
+  {
+    bool ret = true;
+
+    // Check if any string parameter is empty
+    ret = !empty_parameter_in_list(string_parameters_);
+
+    for (size_t i = 0; i < 4; ++i)
+    {
+      if (std::isnan(double_parameters_[i].second))
+      {
+        RCUTILS_LOG_ERROR_NAMED(
+          logger_name_.c_str(),
+          "Parameter '%s' has to be set", double_parameters_[i].first.name.c_str());
+        ret = false;
+      }
+    }
+
+    if (double_parameters_[3].second < 0)
+    {
+      RCUTILS_LOG_ERROR_NAMED(
+        logger_name_.c_str(),
+        "Parameter '%s' has to be positive", double_parameters_[3].first.name.c_str());
+      ret = false;
+    }
+
+    return ret;
+  }
+
+  void update_storage() override
+  {
+    world_frame_ = string_parameters_[0].second;
+    RCUTILS_LOG_INFO_NAMED(
+        logger_name_.c_str(),
+       "World frame: %s", world_frame_.c_str());
+    sensor_frame_ = string_parameters_[0].second;
+    RCUTILS_LOG_INFO_NAMED(
+        logger_name_.c_str(),
+       "Sensor frame: %s", sensor_frame_.c_str());
+    force_frame_ = string_parameters_[0].second;
+    RCUTILS_LOG_INFO_NAMED(
+        logger_name_.c_str(),
+       "Force frame: %s", force_frame_.c_str());
+
+    cog_.vector.x = double_parameters_[0].second;
+    RCUTILS_LOG_INFO_NAMED(
+        logger_name_.c_str(),
+       "CoG X is %e", cog_.vector.x);
+    cog_.vector.y = double_parameters_[1].second;
+    RCUTILS_LOG_INFO_NAMED(
+        logger_name_.c_str(),
+       "CoG Y is %e", cog_.vector.y);
+    cog_.vector.z = double_parameters_[2].second;
+    RCUTILS_LOG_INFO_NAMED(
+        logger_name_.c_str(),
+       "CoG Z is %e", cog_.vector.z);
+
+    force_z_ = double_parameters_[3].second;
+    RCUTILS_LOG_INFO_NAMED(logger_name_.c_str(), "Force is %e", force_z_);
+  }
+
+  // Frames for Transformation of Gravity / CoG Vector
+  std::string world_frame_;
+  std::string sensor_frame_;
+  std::string force_frame_;
+
+  // Storage for Calibration Values
+  geometry_msgs::msg::Vector3Stamped cog_;  // Center of Gravity Vector (wrt Sensor Frame)
+  double force_z_;                          // Gravitational Force
+};
+
 template <typename T>
 class GravityCompensator : public filters::FilterBase<T>
 {
@@ -80,27 +169,29 @@ private:
   rclcpp::Node::SharedPtr node_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-  // Storage for Calibration Values
-  geometry_msgs::msg::Vector3Stamped cog_;  // Center of Gravity Vector (wrt Sensor Frame)
-  double force_z_;                          // Gravitational Force
+//   // Storage for Calibration Values
+//   geometry_msgs::msg::Vector3Stamped cog_;  // Center of Gravity Vector (wrt Sensor Frame)
+//   double force_z_;                          // Gravitational Force
+//
+//   // Frames for Transformation of Gravity / CoG Vector
+//   std::string world_frame_;
+//   std::string sensor_frame_;
+//   std::string force_frame_;
 
-  // Frames for Transformation of Gravity / CoG Vector
-  std::string world_frame_;
-  std::string sensor_frame_;
-  std::string force_frame_;
+  std::unique_ptr<GravityCompensatorParameters> parameters_;
 
   // tf2 objects
   std::unique_ptr<tf2_ros::Buffer> p_tf_Buffer_;
   std::unique_ptr<tf2_ros::TransformListener> p_tf_Listener_;
   geometry_msgs::msg::TransformStamped transform_, transform_back_, transform_cog_;
 
-  bool configured_;
+  // Callback for updating dynamic parameters
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_callback_handle_;
 };
 
 template <typename T>
 GravityCompensator<T>::GravityCompensator()
   : logger_(rclcpp::get_logger("GravityCompensator"))
-  , configured_(false)
 {
 }
 
@@ -116,16 +207,26 @@ bool GravityCompensator<T>::configure()
   p_tf_Buffer_.reset(new tf2_ros::Buffer(clock_));
   p_tf_Listener_.reset(new tf2_ros::TransformListener(*p_tf_Buffer_.get(), true));
 
-  if(!updateParameters()){
+  parameters_.reset(new GravityCompensatorParameters(this->param_prefix_));
+
+  parameters_->declare_parameters(this->logging_interface_, this->params_interface_);
+
+  if(!parameters_->get_parameters())
+  {
     return false;
   }
-  else{
-    configured_ = true;
-  }
-  RCLCPP_INFO(logger_,
-              "Gravity Compensation Params: world frame: %s; sensor frame: %s; force frame: %s; CoG x:%f; "
-              "CoG y:%f; CoG z:%f; force: %f.",
-              world_frame_.c_str(), sensor_frame_.c_str(), force_frame_.c_str(), cog_.vector.x, cog_.vector.y, cog_.vector.z, force_z_);
+
+  // Add callback to dynamically update parameters
+  on_set_callback_handle_ = this->params_interface_->add_on_set_parameters_callback(
+    [this](const std::vector<rclcpp::Parameter> & parameters) {
+
+      return parameters_->set_parameter_callback(parameters);
+    });
+
+//   RCLCPP_INFO(logger_,
+//               "Gravity Compensation Params: world frame: %s; sensor frame: %s; force frame: %s; CoG x:%f; "
+//               "CoG y:%f; CoG z:%f; force: %f.",
+//               world_frame_.c_str(), sensor_frame_.c_str(), force_frame_.c_str(), cog_.vector.x, cog_.vector.y, cog_.vector.z, force_z_);
 
   return true;
 }
@@ -133,17 +234,22 @@ bool GravityCompensator<T>::configure()
 template <typename T>
 bool GravityCompensator<T>::update(const T& data_in, T& data_out)
 {
-  if (!configured_)
+  if (!this->configured_)
   {
-    RCLCPP_ERROR(logger_, "Filter is not configured");
+    RCLCPP_ERROR_SKIPFIRST_THROTTLE(logger_, *clock_, 2000, "Filter is not configured");
     return false;
   }
 
+  parameters_->update();
+
   try
   {
-    transform_ = p_tf_Buffer_->lookupTransform(world_frame_, data_in.header.frame_id, rclcpp::Time());
-    transform_back_ = p_tf_Buffer_->lookupTransform(data_in.header.frame_id, world_frame_, rclcpp::Time());
-    transform_cog_ = p_tf_Buffer_->lookupTransform(world_frame_,  force_frame_, rclcpp::Time());
+    transform_ = p_tf_Buffer_->lookupTransform(
+      parameters_->world_frame_, data_in.header.frame_id, rclcpp::Time());
+    transform_back_ = p_tf_Buffer_->lookupTransform(
+      data_in.header.frame_id, parameters_->world_frame_, rclcpp::Time());
+    transform_cog_ = p_tf_Buffer_->lookupTransform(
+      parameters_->world_frame_,  parameters_->force_frame_, rclcpp::Time());
   }
   catch (const tf2::TransformException& ex)
   {
@@ -160,13 +266,13 @@ bool GravityCompensator<T>::update(const T& data_in, T& data_out)
 
   // Transform CoG Vector
   geometry_msgs::msg::Vector3Stamped cog_transformed;
-  tf2::doTransform(cog_, cog_transformed, transform_cog_);
+  tf2::doTransform(parameters_->cog_, cog_transformed, transform_cog_);
 
   // Compensate for gravity force
-  temp_force_transformed.vector.z += force_z_;
+  temp_force_transformed.vector.z += parameters_->force_z_;
   // Compensation Values for torque result from Crossprod of cog Vector and (0 0 G)
-  temp_torque_transformed.vector.x += (force_z_ * cog_transformed.vector.y);
-  temp_torque_transformed.vector.y -= (force_z_ * cog_transformed.vector.x);
+  temp_torque_transformed.vector.x += (parameters_->force_z_ * cog_transformed.vector.y);
+  temp_torque_transformed.vector.y -= (parameters_->force_z_ * cog_transformed.vector.x);
 
   // Copy Message and Compensate values for Gravity Force and Resulting Torque
   data_out = data_in;
@@ -180,52 +286,52 @@ bool GravityCompensator<T>::update(const T& data_in, T& data_out)
   return true;
 }
 
-template <typename T>
-bool GravityCompensator<T>::updateParameters()
-{
-  if (!filters::FilterBase<T>::getParam("world_frame", world_frame_)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param world_frame_");
-    return false;
-  }
-  if (!filters::FilterBase<T>::getParam("sensor_frame", sensor_frame_)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param sensor_frame");
-    return false;
-  }
-  if (!filters::FilterBase<T>::getParam("force_frame", force_frame_)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param force_frame");
-    return false;
-  }
-  if (!filters::FilterBase<T>::getParam("CoG_x", cog_.vector.x)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param CoG_x");
-    return false;
-  }
-  if (!filters::FilterBase<T>::getParam("CoG_y", cog_.vector.y)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param CoG_y");
-    return false;
-  }
-  if (!filters::FilterBase<T>::getParam("CoG_z", cog_.vector.z)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param CoG_z");
-    return false;
-  }
-  if (!filters::FilterBase<T>::getParam("force", force_z_)) {
-    RCLCPP_ERROR(
-      this->logging_interface_->get_logger(),
-      "Gravitiy Compensator did not find param force");
-    return false;
-  }
-  return true;
-}
+// template <typename T>
+// bool GravityCompensator<T>::updateParameters()
+// {
+//   if (!filters::FilterBase<T>::getParam("world_frame", world_frame_)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param world_frame_");
+//     return false;
+//   }
+//   if (!filters::FilterBase<T>::getParam("sensor_frame", sensor_frame_)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param sensor_frame");
+//     return false;
+//   }
+//   if (!filters::FilterBase<T>::getParam("force_frame", force_frame_)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param force_frame");
+//     return false;
+//   }
+//   if (!filters::FilterBase<T>::getParam("CoG_x", cog_.vector.x)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param CoG_x");
+//     return false;
+//   }
+//   if (!filters::FilterBase<T>::getParam("CoG_y", cog_.vector.y)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param CoG_y");
+//     return false;
+//   }
+//   if (!filters::FilterBase<T>::getParam("CoG_z", cog_.vector.z)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param CoG_z");
+//     return false;
+//   }
+//   if (!filters::FilterBase<T>::getParam("force", force_z_)) {
+//     RCLCPP_ERROR(
+//       this->logging_interface_->get_logger(),
+//       "Gravitiy Compensator did not find param force");
+//     return false;
+//   }
+//   return true;
+// }
 }  // namespace iirob_filters
 #endif
