@@ -90,14 +90,6 @@ public:
       }
     }
 
-    if (double_parameters_[3].second < 0)
-    {
-      RCUTILS_LOG_ERROR_NAMED(
-        logger_name_.c_str(),
-        "Parameter '%s' has to be positive", double_parameters_[3].first.name.c_str());
-      ret = false;
-    }
-
     return ret;
   }
 
